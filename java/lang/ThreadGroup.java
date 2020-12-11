@@ -884,25 +884,37 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      *          if the Thread group has been destroyed
      */
     void add(Thread t) {
+        // 获得此类实例锁
         synchronized (this) {
+            // 如果线程组被摧毁，则抛出违规线程状态异常
             if (destroyed) {
                 throw new IllegalThreadStateException();
             }
+
+            // 如果线程数组为空，则新建容量为4的线程数组
             if (threads == null) {
                 threads = new Thread[4];
             } else if (nthreads == threads.length) {
+                // 如果当前线程数组已满，则对线程数组扩容（扩容为之前容量的两倍）
                 threads = Arrays.copyOf(threads, nthreads * 2);
             }
+
+            // 将新线程添加至组内
             threads[nthreads] = t;
 
             // This is done last so it doesn't matter in case the
             // thread is killed
+            // 这是最后要处理的。
             nthreads++;
 
             // The thread is now a fully fledged member of the group, even
             // though it may, or may not, have been started yet. It will prevent
             // the group from being destroyed so the unstarted Threads count is
             // decremented.
+            /*
+                该线程现在是该组的正式成员，不管有没有启动该线程。
+                该线程将阻止线程组被摧毁，以使未开启的线程计数减少。
+             */
             nUnstartedThreads--;
         }
     }
@@ -920,7 +932,9 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      *         the Thread whose start method was invoked
      */
     void threadStartFailed(Thread t) {
+        // 获得当前实例锁
         synchronized(this) {
+            // 移除该线程，并且置未启动线程数加1
             remove(t);
             nUnstartedThreads++;
         }

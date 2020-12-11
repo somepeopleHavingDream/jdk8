@@ -163,6 +163,10 @@ class Thread implements Runnable {
     private Runnable target;
 
     /* The group of this thread */
+
+    /**
+     * 此线程所在的组
+     */
     private ThreadGroup group;
 
     /* The context ClassLoader for this thread */
@@ -209,6 +213,10 @@ class Thread implements Runnable {
 
     /* Java thread status for tools,
      * initialized to indicate thread 'not yet started'
+     *
+     * 工具的Java线程状态，被初始化以显示线程“还未开始”。
+     *
+     * threadStatus作为Thread类的成员变量，在Thread类中并未被修改值，故可以用final修饰符修饰，也因此并不需要使用volatile关键字修饰。
      */
 
     private volatile int threadStatus = 0;
@@ -697,33 +705,51 @@ class Thread implements Runnable {
      * @see        #stop()
      */
     public synchronized void start() {
-        /**
+        /*
          * This method is not invoked for the main method thread or "system"
          * group threads created/set up by the VM. Any new functionality added
          * to this method in the future may have to also be added to the VM.
          *
+         * 主线程或者由虚拟机创建和设置的系统组线程不调用此方法。
+         * 在未来，任何被添加到此方法里的功能可能也会被添加到虚拟机。
+         *
          * A zero status value corresponds to state "NEW".
+         *
+         * 0状态值与状态”NEW“相对应。
          */
+
+        // 如果线程当前状态不是NEW，则抛出违规线程状态异常。
         if (threadStatus != 0)
             throw new IllegalThreadStateException();
 
         /* Notify the group that this thread is about to be started
          * so that it can be added to the group's list of threads
          * and the group's unstarted count can be decremented. */
+
+        /*
+            通知组此线程将被启动，以便让将该线程添加到线程组列表里，并且减少组的未开始计数。
+         */
         group.add(this);
 
         boolean started = false;
         try {
+            // 调用线程的本地方法，以启动线程，并将启动标记置为真
             start0();
             started = true;
         } finally {
             try {
+                // 如果线程启动失败，则线程组更新相关统计信息
                 if (!started) {
                     group.threadStartFailed(this);
                 }
             } catch (Throwable ignore) {
                 /* do nothing. If start0 threw a Throwable then
                   it will be passed up the call stack */
+
+                /*
+                    什么都不做。
+                    如果start0抛出一个可抛出异常，随后该异常将被传递到调用栈。
+                 */
             }
         }
     }
