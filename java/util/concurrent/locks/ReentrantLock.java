@@ -105,7 +105,10 @@ import java.util.Collection;
  */
 public class ReentrantLock implements Lock, java.io.Serializable {
     private static final long serialVersionUID = 7373984872572414699L;
-    /** Synchronizer providing all implementation mechanics */
+    /* Synchronizer providing all implementation mechanics */
+    /**
+     * 提供所有实现机制的同步器
+     */
     private final Sync sync;
 
     /**
@@ -254,6 +257,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      * This is equivalent to using {@code ReentrantLock(false)}.
      */
     public ReentrantLock() {
+        // 将同步器设置为不公平同步器，通过调用NonfairSync类的无参构造方法
         sync = new NonfairSync();
     }
 
