@@ -65,6 +65,8 @@ public class PrintStream extends FilterOutputStream
     /**
      * Track both the text- and character-output streams, so that their buffers
      * can be flushed without flushing the entire stream.
+     *
+     * 跟踪文本和字符输出流，以便能刷新它们的缓冲区而不用刷新整个流。
      */
     private BufferedWriter textOut;
     private OutputStreamWriter charOut;
@@ -321,6 +323,7 @@ public class PrintStream extends FilterOutputStream
 
     /** Check to make sure that the stream has not been closed */
     private void ensureOpen() throws IOException {
+        // 确认输出流是否存在，如果不存在，则抛出输入输出异常
         if (out == null)
             throw new IOException("Stream closed");
     }
@@ -663,6 +666,7 @@ public class PrintStream extends FilterOutputStream
      * @param      s   The <code>String</code> to be printed
      */
     public void print(String s) {
+        // 如果字符串为空，则设置为空串
         if (s == null) {
             s = "null";
         }
@@ -802,8 +806,11 @@ public class PrintStream extends FilterOutputStream
      * @param x  The <code>String</code> to be printed.
      */
     public void println(String x) {
+        // 拿到当前对象实例锁
         synchronized (this) {
+            // 打印字符串
             print(x);
+            // 换行
             newLine();
         }
     }
