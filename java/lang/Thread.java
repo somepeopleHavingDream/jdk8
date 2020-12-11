@@ -1075,8 +1075,13 @@ class Thread implements Runnable {
      * Tests if this thread is alive. A thread is alive if it has
      * been started and has not yet died.
      *
+     * 测试是否此线程对象是否活跃。
+     * 如果此线程已经开始但还没死亡，则此线程是活跃的。
+     *
      * @return  <code>true</code> if this thread is alive;
      *          <code>false</code> otherwise.
+     *
+     *          如果线程活跃则返回真，否则返回假。
      */
     public final native boolean isAlive();
 
@@ -1327,15 +1332,18 @@ class Thread implements Runnable {
         long base = System.currentTimeMillis();
         long now = 0;
 
+        // 检验入参
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
         }
 
         if (millis == 0) {
+            // 如果此线程对象活跃，则当前调用线程陷入等待状态
             while (isAlive()) {
                 wait(0);
             }
         } else {
+            // 计时等待
             while (isAlive()) {
                 long delay = millis - now;
                 if (delay <= 0) {
@@ -1898,6 +1906,7 @@ class Thread implements Runnable {
      */
     public State getState() {
         // get current thread state
+        // 获得当前线程状态
         return sun.misc.VM.toThreadState(threadStatus);
     }
 

@@ -466,6 +466,10 @@ public class Object {
      * {@link java.lang.Object#notifyAll()} method for this object.
      * In other words, this method behaves exactly as if it simply
      * performs the call {@code wait(0)}.
+     *
+     * 引起当前线程等待，直到其他线程为此对象调用java.lang.Object#notify()方法或者java.lang.Object#notifyAll()方法。
+     * 换句话说，此方法的行为就是简单地执行对wait(0)的调用。
+     *
      * <p>
      * The current thread must own this object's monitor. The thread
      * releases ownership of this monitor and waits until another thread
@@ -473,14 +477,31 @@ public class Object {
      * either through a call to the {@code notify} method or the
      * {@code notifyAll} method. The thread then waits until it can
      * re-obtain ownership of the monitor and resumes execution.
+     *
+     * 当前线程必须拥有此对象的监视器。
+     * 直到其他线程要么通过对notify方法的调用，要么通过对notifyAll方法的调用，去唤醒等待在此对象监视器上的线程，
+     * 线程才会释放此监视器的所有权并且进入等待状态。
+     * 线程将进入等待状态，直到该线程能重新获取到监视器的所有权，然后继续执行。
+     *
      * <p>
      * As in the one argument version, interrupts and spurious wakeups are
      * possible, and this method should always be used in a loop:
+     *
+     * 与一个参数的版本一样，打断和虚假唤醒是可能发生的，因此该方法应该总是在循环里使用：
+     *
      * <pre>
      *     synchronized (obj) {
      *         while (&lt;condition does not hold&gt;)
      *             obj.wait();
      *         ... // Perform action appropriate to condition
+     *     }
+     *
+     *     synchronized (obj) {
+     *         while (condition does not hold) {
+     *             obj.wait()
+     *              // ...
+     *              // 执行适合条件的行动
+     *         }
      *     }
      * </pre>
      * This method should only be called by a thread that is the owner
@@ -488,13 +509,23 @@ public class Object {
      * description of the ways in which a thread can become the owner of
      * a monitor.
      *
+     * 此方法仅应当由对象监视器的拥有者线程调用。
+     * 关于线程可以成为监视器拥有者的方法，请查看notify方法的描述。
+     *
      * @throws  IllegalMonitorStateException  if the current thread is not
      *               the owner of the object's monitor.
+     *
+     *               如果当前线程不是对象监视器的拥有者，则抛出违规监视器状态异常。
+     *
      * @throws  InterruptedException if any thread interrupted the
      *             current thread before or while the current thread
      *             was waiting for a notification.  The <i>interrupted
      *             status</i> of the current thread is cleared when
      *             this exception is thrown.
+     *
+     *             如果有任何线程在之前打断了当前线程或者当前线程正在等待一个通知。
+     *             当抛出异常时，将清除当前线程的打断状态。
+     *
      * @see        java.lang.Object#notify()
      * @see        java.lang.Object#notifyAll()
      */
