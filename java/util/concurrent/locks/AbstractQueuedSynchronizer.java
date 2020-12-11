@@ -518,6 +518,10 @@ public abstract class AbstractQueuedSynchronizer
      * initialization, it is modified only via method setHead.  Note:
      * If head exists, its waitStatus is guaranteed not to be
      * CANCELLED.
+     *
+     * 等待队列的头元素，懒加载。
+     * 除了初始化，只使用setHead方法修改head值。
+     * 注意：如果头元素存在，则保证头元素的waitStatus不是已取消的。
      */
     private transient volatile Node head;
 
@@ -1260,7 +1264,9 @@ public abstract class AbstractQueuedSynchronizer
      * @return the value returned from {@link #tryRelease}
      */
     public final boolean release(int arg) {
+        // 尝试释放掉arg个状态
         if (tryRelease(arg)) {
+            // 通知等待队列的后继元素，并返回真
             Node h = head;
             if (h != null && h.waitStatus != 0)
                 unparkSuccessor(h);

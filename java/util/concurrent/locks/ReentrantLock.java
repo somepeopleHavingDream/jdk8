@@ -462,6 +462,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      *         hold this lock
      */
     public void unlock() {
+        // 同步器释放调一把锁
         sync.release(1);
     }
 
