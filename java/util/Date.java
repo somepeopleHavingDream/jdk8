@@ -162,6 +162,7 @@ public class Date
      * @see     java.lang.System#currentTimeMillis()
      */
     public Date() {
+        // 调用System类的本地方法来设置时间
         this(System.currentTimeMillis());
     }
 
