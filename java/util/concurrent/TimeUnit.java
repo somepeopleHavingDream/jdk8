@@ -116,6 +116,8 @@ public enum TimeUnit {
 
     /**
      * Time unit representing one second
+     *
+     * 表示一秒的时间单位
      */
     SECONDS {
         public long toNanos(long d)   { return x(d, C3/C0, MAX/(C3/C0)); }
@@ -380,7 +382,9 @@ public enum TimeUnit {
      * @throws InterruptedException if interrupted while sleeping
      */
     public void sleep(long timeout) throws InterruptedException {
+        // 对时延入参做校验
         if (timeout > 0) {
+            // 根据毫秒值和纳秒值做线程休眠
             long ms = toMillis(timeout);
             int ns = excessNanos(timeout, ms);
             Thread.sleep(ms, ns);
