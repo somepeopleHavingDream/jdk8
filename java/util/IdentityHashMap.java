@@ -145,6 +145,10 @@ public class IdentityHashMap<K,V>
      * MUST be a power of two.  The value 32 corresponds to the
      * (specified) expected maximum size of 21, given a load factor
      * of 2/3.
+     *
+     * 由无参构造器使用的初始容量。
+     * 必须是2的幂次。
+     * 值32符合给定加载因子2/3的指定最大值21。
      */
     private static final int DEFAULT_CAPACITY = 32;
 

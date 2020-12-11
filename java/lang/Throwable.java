@@ -632,6 +632,7 @@ public class Throwable implements Serializable {
      * </pre>
      */
     public void printStackTrace() {
+        // 打印到标准错误流
         printStackTrace(System.err);
     }
 
@@ -647,10 +648,12 @@ public class Throwable implements Serializable {
     private void printStackTrace(PrintStreamOrWriter s) {
         // Guard against malicious overrides of Throwable.equals by
         // using a Set with identity equality semantics.
+        // 通过使用具有身份相等语义的集合来防止Throwable.equals的语义覆盖
         Set<Throwable> dejaVu =
             Collections.newSetFromMap(new IdentityHashMap<Throwable, Boolean>());
         dejaVu.add(this);
 
+        // 拿到锁，打印栈轨迹
         synchronized (s.lock()) {
             // Print our stack trace
             s.println(this);

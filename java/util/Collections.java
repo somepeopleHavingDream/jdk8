@@ -5497,10 +5497,18 @@ public class Collections {
     private static class SetFromMap<E> extends AbstractSet<E>
         implements Set<E>, Serializable
     {
+        /**
+         * 备份映射
+         */
         private final Map<E, Boolean> m;  // The backing map
+
+        /**
+         * 该映射的键集
+         */
         private transient Set<E> s;       // Its keySet
 
         SetFromMap(Map<E, Boolean> map) {
+            // 如果入参map不为空，抛出违规参数异常
             if (!map.isEmpty())
                 throw new IllegalArgumentException("Map is non-empty");
             m = map;
