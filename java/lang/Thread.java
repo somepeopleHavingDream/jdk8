@@ -250,6 +250,9 @@ class Thread implements Runnable {
     /* The object in which this thread is blocked in an interruptible I/O
      * operation, if any.  The blocker's interrupt method should be invoked
      * after setting this thread's interrupt status.
+     *
+     * 在一个可打断的输入输出操作里（如果有），阻塞此线程对象。
+     * 阻塞者的打断方法应该在设置线程打断状态之后被调用。
      */
     private volatile Interruptible blocker;
     private final Object blockerLock = new Object();
@@ -980,17 +983,24 @@ class Thread implements Runnable {
      * @spec JSR-51
      */
     public void interrupt() {
+        // 如果执行此段代码当前线程的不是此线程实例，则检查访问权限
         if (this != Thread.currentThread())
             checkAccess();
 
+        // 拿到阻塞锁
         synchronized (blockerLock) {
+            // 如果可打断对象不为空
             Interruptible b = blocker;
             if (b != null) {
+                // 设置中断标志
                 interrupt0();           // Just to set the interrupt flag
+                // 打断此线程，然后返回
                 b.interrupt(this);
                 return;
             }
         }
+
+        // 设置打断状态
         interrupt0();
     }
 

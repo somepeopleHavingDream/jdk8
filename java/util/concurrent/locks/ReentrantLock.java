@@ -206,9 +206,12 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          * acquire on failure.
          */
         final void lock() {
+            // acs比较状态值，以获取锁
             if (compareAndSetState(0, 1))
+                // 设置为当前线程独占
                 setExclusiveOwnerThread(Thread.currentThread());
             else
+                // 尝试获取锁
                 acquire(1);
         }
 
@@ -286,6 +289,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      * at which time the lock hold count is set to one.
      */
     public void lock() {
+        // ReentrantLock类的lock方法是通过同步器的lock方法实现的
         sync.lock();
     }
 

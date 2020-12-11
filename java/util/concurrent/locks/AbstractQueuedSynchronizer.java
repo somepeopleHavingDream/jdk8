@@ -563,6 +563,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     protected final boolean compareAndSetState(int expect, int update) {
         // See below for intrinsics setup to support this
+        // 参阅下面的内部函数设置以支持此值
         return unsafe.compareAndSwapInt(this, stateOffset, expect, update);
     }
 
@@ -1195,6 +1196,7 @@ public abstract class AbstractQueuedSynchronizer
      *        can represent anything you like.
      */
     public final void acquire(int arg) {
+        // 如果尝试获取状态失败，则进入aqs队列，然后中断当前线程
         if (!tryAcquire(arg) &&
             acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
             selfInterrupt();
