@@ -154,6 +154,9 @@ class Thread implements Runnable {
     private boolean     single_step;
 
     /* Whether or not the thread is a daemon thread. */
+    /**
+     * 该线程是否是守护线程。
+     */
     private boolean     daemon = false;
 
     /* JVM state */
@@ -179,6 +182,10 @@ class Thread implements Runnable {
     private AccessControlContext inheritedAccessControlContext;
 
     /* For autonumbering anonymous threads. */
+    /**
+     * 用于自动编号匿名线程。
+     * 该成员变量被static关键字修饰，属于类成员变量。
+     */
     private static int threadInitNumber;
     private static synchronized int nextThreadNum() {
         return threadInitNumber++;
@@ -212,6 +219,9 @@ class Thread implements Runnable {
     private long tid;
 
     /* For generating thread ID */
+    /**
+     * 用于生成线程ID
+     */
     private static long threadSeqNumber;
 
     /* Java thread status for tools,
@@ -376,25 +386,40 @@ class Thread implements Runnable {
     private void init(ThreadGroup g, Runnable target, String name,
                       long stackSize, AccessControlContext acc,
                       boolean inheritThreadLocals) {
+        // 线程名不可以为空，如果线程名为空，则抛出空指针异常
         if (name == null) {
             throw new NullPointerException("name cannot be null");
         }
 
+        // 设置线程名称
         this.name = name;
 
+        // 当前调用线程，即为新创建线程的父线程
         Thread parent = currentThread();
+        // 获得安全管理器
         SecurityManager security = System.getSecurityManager();
+
+        // 如果线程组为空
         if (g == null) {
             /* Determine if it's an applet or not */
+            /*
+                确定是否是applet。
+             */
 
             /* If there is a security manager, ask the security manager
                what to do. */
+            /*
+                如果有安全管理器，询问安全管理器该做什么。
+             */
             if (security != null) {
                 g = security.getThreadGroup();
             }
 
             /* If the security doesn't have a strong opinion of the matter
                use the parent thread group. */
+            /*
+                如果安全管理器对此没有强烈的意愿，使用父线程组。
+             */
             if (g == null) {
                 g = parent.getThreadGroup();
             }
@@ -402,10 +427,13 @@ class Thread implements Runnable {
 
         /* checkAccess regardless of whether or not threadgroup is
            explicitly passed in. */
+        // 不管是否显式的传入线程组，都执行checkAccess。
         g.checkAccess();
 
         /*
          * Do we have the required permissions?
+         *
+         * 我们是否具有需要的权限？
          */
         if (security != null) {
             if (isCCLOverridden(getClass())) {
@@ -413,26 +441,36 @@ class Thread implements Runnable {
             }
         }
 
+        // 更新线程组的未启动线程数计数
         g.addUnstarted();
 
+        // 接下来设置该线程的一些信息
+        // 线程组
         this.group = g;
+        // 是否为守护线程，继承自父线程，即，若父线程为守护线程，则该线程也为守护线程，反之亦然
         this.daemon = parent.isDaemon();
+        // 优先级，继承自父线程
         this.priority = parent.getPriority();
+        // 上下文类加载器
         if (security == null || isCCLOverridden(parent.getClass()))
             this.contextClassLoader = parent.getContextClassLoader();
         else
             this.contextClassLoader = parent.contextClassLoader;
         this.inheritedAccessControlContext =
                 acc != null ? acc : AccessController.getContext();
+        // 运行实例
         this.target = target;
+        // 设置优先级
         setPriority(priority);
         if (inheritThreadLocals && parent.inheritableThreadLocals != null)
             this.inheritableThreadLocals =
                 ThreadLocal.createInheritedMap(parent.inheritableThreadLocals);
         /* Stash the specified stack size in case the VM cares */
+        // 存放指定的栈大小，以防虚拟机注意
         this.stackSize = stackSize;
 
         /* Set thread ID */
+        // 设置线程ID
         tid = nextThreadID();
     }
 
@@ -1114,10 +1152,16 @@ class Thread implements Runnable {
      */
     public final void setPriority(int newPriority) {
         ThreadGroup g;
+
+        // 检查访问权限
         checkAccess();
+
+        // 检查新优先级的权限，如果新优先级权限范围异常，则抛出违规参数异常
         if (newPriority > MAX_PRIORITY || newPriority < MIN_PRIORITY) {
             throw new IllegalArgumentException();
         }
+
+        // 设置新的优先级，该线程优先级不超过线程组的最大优先级
         if((g = getThreadGroup()) != null) {
             if (newPriority > g.getMaxPriority()) {
                 newPriority = g.getMaxPriority();

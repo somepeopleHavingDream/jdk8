@@ -862,10 +862,14 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      * them are not destroyed.
      */
     void addUnstarted() {
+        // 获得此对象实例
         synchronized(this) {
+            // 如果线程组被摧毁，则抛出违规线程状态异常
             if (destroyed) {
                 throw new IllegalThreadStateException();
             }
+
+            // 未开始线程的计数值加1
             nUnstartedThreads++;
         }
     }
