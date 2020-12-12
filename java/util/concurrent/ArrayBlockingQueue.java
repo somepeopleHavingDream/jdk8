@@ -236,6 +236,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws IllegalArgumentException if {@code capacity < 1}
      */
     public ArrayBlockingQueue(int capacity) {
+        // 传入容量，并设置队列为不公平模式
         this(capacity, false);
     }
 
@@ -250,11 +251,18 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws IllegalArgumentException if {@code capacity < 1}
      */
     public ArrayBlockingQueue(int capacity, boolean fair) {
+        // 对入参容量做范围判断，如果不合理则抛出违规参数异常
         if (capacity <= 0)
             throw new IllegalArgumentException();
+
+        // 设置相关成员变量
+        // 队列元素
         this.items = new Object[capacity];
+        // 队列锁
         lock = new ReentrantLock(fair);
+        // 队列的不空条件（该Condition对象由ReentrantLock里的Sync实例创建，而Sync实例其实是通过调用AQS类中的相关方法实现
         notEmpty = lock.newCondition();
+        // 队列的不满条件
         notFull =  lock.newCondition();
     }
 
