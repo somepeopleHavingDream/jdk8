@@ -95,6 +95,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     final Object[] items;
 
     /** items index for next take, poll, peek or remove */
+    // 下一个take、poll、peek、remove的元素下标
     int takeIndex;
 
     /** items index for next put, offer, or add */
@@ -126,6 +127,9 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * Shared state for currently active iterators, or null if there
      * are known not to be any.  Allows queue operations to update
      * iterator state.
+     *
+     * 当前活跃迭代器共享的状态，如果已知则为空。
+     * 允许去更新迭代器状态的队列操作。
      */
     transient Itrs itrs = null;
 
@@ -184,14 +188,21 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         // assert lock.getHoldCount() == 1;
         // assert items[takeIndex] != null;
         final Object[] items = this.items;
+
+        // 取出队首元素，并置队首索引处的元素为空，队首索引往后挪一位（该队列为循环队列）
         @SuppressWarnings("unchecked")
         E x = (E) items[takeIndex];
         items[takeIndex] = null;
         if (++takeIndex == items.length)
             takeIndex = 0;
+
+        // 队列元素数量减一
         count--;
+
         if (itrs != null)
             itrs.elementDequeued();
+
+        // 通知不满条件发生
         notFull.signal();
         return x;
     }
@@ -422,11 +433,15 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     }
 
     public E take() throws InterruptedException {
+        // 拿到锁，设置为可中断式加锁
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
+            // 当队列为空，等待不空条件发生
             while (count == 0)
                 notEmpty.await();
+
+            // 出队，从队列中取出一个元素
             return dequeue();
         } finally {
             lock.unlock();
@@ -861,6 +876,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         int cycles = 0;
 
         /** Linked list of weak iterator references */
+        // 弱迭代器引用的链接列表
         private Node head;
 
         /** Used to expunge stale iterators */
@@ -1006,6 +1022,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
          */
         void queueIsEmpty() {
             // assert lock.getHoldCount() == 1;
+            // 断言已拿到锁
             for (Node p = head; p != null; p = p.next) {
                 Itr it = p.get();
                 if (it != null) {
@@ -1019,9 +1036,12 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
 
         /**
          * Called whenever an element has been dequeued (at takeIndex).
+         *
+         * 每当元素出队时调用
          */
         void elementDequeued() {
             // assert lock.getHoldCount() == 1;
+            // 断言已拥有锁，实际上也是的，因为如果没拿到锁，是不会进入到这段代码的
             if (count == 0)
                 queueIsEmpty();
             else if (takeIndex == 0)
