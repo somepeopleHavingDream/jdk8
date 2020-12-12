@@ -91,15 +91,18 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     private static final long serialVersionUID = -817911632652898426L;
 
     /** The queued items */
+    // 排队的元素
     final Object[] items;
 
     /** items index for next take, poll, peek or remove */
     int takeIndex;
 
     /** items index for next put, offer, or add */
+    // 下一个put、offer、add的元素索引
     int putIndex;
 
     /** Number of elements in the queue */
+    // 队列中元素的个数
     int count;
 
     /*
@@ -108,12 +111,15 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      */
 
     /** Main lock guarding all access */
+    // 守护所有访问的主锁
     final ReentrantLock lock;
 
     /** Condition for waiting takes */
+    // 用于等待拿去的条件
     private final Condition notEmpty;
 
     /** Condition for waiting puts */
+    // 用于等待放置的条件
     private final Condition notFull;
 
     /**
@@ -146,6 +152,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @param v the element
      */
     private static void checkNotNull(Object v) {
+        // 如果入参为空，则抛出空指针异常
         if (v == null)
             throw new NullPointerException();
     }
@@ -159,8 +166,12 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         // assert items[putIndex] == null;
         final Object[] items = this.items;
         items[putIndex] = x;
+
+        // 在放置完当前元素后，如果队列满，则将putIndex置为0，因此此段代码说明了该阻塞队列为循环队列
         if (++putIndex == items.length)
             putIndex = 0;
+
+        // 队列元素加1，并通知不空条件发生
         count++;
         notEmpty.signal();
     }
@@ -353,14 +364,21 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException {@inheritDoc}
      */
     public void put(E e) throws InterruptedException {
+        // 检查入参是否为空
         checkNotNull(e);
+
+        // 拿到锁，并加锁（设置为可被打断地加锁）
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
+            // 当队列满，等待不满条件发生
             while (count == items.length)
                 notFull.await();
+
+            // 进队
             enqueue(e);
         } finally {
+            // 解锁
             lock.unlock();
         }
     }
