@@ -81,8 +81,14 @@ class ComparableTimSort {
      * Maximum initial size of tmp array, which is used for merging.  The array
      * can grow to accommodate demand.
      *
+     * 用于归并的临时数组的最大初始大小。
+     * 数组可以增长以适应需求。
+     *
      * Unlike Tim's original C version, we do not allocate this much storage
      * when sorting smaller arrays.  This change was required for performance.
+     *
+     * 不像Tim原始的C版本，当排序小数组时，我们不分配那么大的存储。
+     * 由于性能，需要此改变。
      */
     private static final int INITIAL_TMP_STORAGE_LENGTH = 256;
 
@@ -90,6 +96,8 @@ class ComparableTimSort {
      * Temp storage for merges. A workspace array may optionally be
      * provided in constructor, and if so will be used as long as it
      * is big enough.
+     *
+     * 用于归并的临时存储。
      */
     private Object[] tmp;
     private int tmpBase; // base of tmp array slice
@@ -100,11 +108,18 @@ class ComparableTimSort {
      * address base[i] and extends for len[i] elements.  It's always
      * true (so long as the indices are in bounds) that:
      *
+     * 还未归并的待续游程栈。
+     * 游程i开始于地址base[i]，并且扩展到len[i]个元素。
+     * 这总是正确的（只要索引在范围内）：
+     *
      *     runBase[i] + runLen[i] == runBase[i + 1]
      *
      * so we could cut the storage for this, but it's a minor amount,
      * and keeping all the info explicit simplifies the code.
+     *
+     * 所以我们可以为此减少存储，但是它是个小数目，保持所有信息清晰以简化代码。
      */
+    // 栈中待排序游程的数量
     private int stackSize = 0;  // Number of pending runs on stack
     private final int[] runBase;
     private final int[] runLen;
@@ -121,6 +136,7 @@ class ComparableTimSort {
         this.a = a;
 
         // Allocate temp storage (which may be increased later if necessary)
+        // 分配临时存储（如果有必要的话，随后会增加）
         int len = a.length;
         int tlen = (len < 2 * INITIAL_TMP_STORAGE_LENGTH) ?
             len >>> 1 : INITIAL_TMP_STORAGE_LENGTH;
@@ -149,6 +165,7 @@ class ComparableTimSort {
          * increasing scenario. More explanations are given in section 4 of:
          * http://envisage-project.eu/wp-content/uploads/2015/02/sorting.pdf
          */
+        // 计算栈长度
         int stackLen = (len <    120  ?  5 :
                         len <   1542  ? 10 :
                         len < 119151  ? 24 : 49);
@@ -202,19 +219,27 @@ class ComparableTimSort {
          * to maintain stack invariant.
          */
         ComparableTimSort ts = new ComparableTimSort(a, work, workBase, workLen);
+
+        // 计算最小游程长度
         int minRun = minRunLength(nRemaining);
         do {
             // Identify next run
+            // 确定下一次运行（或者说是确定下一次运行的游程长度）
             int runLen = countRunAndMakeAscending(a, lo, hi);
 
             // If run is short, extend to min(minRun, nRemaining)
+            // 如果游程短，则扩展到min(minRun, nRemaining)
             if (runLen < minRun) {
-                int force = nRemaining <= minRun ? nRemaining : minRun;
+                // force为该小段排序的终端服务
+                int force = Math.min(nRemaining, minRun);
                 binarySort(a, lo, lo + force, lo + runLen);
+
+                // 更新游程长度（也就是说，此时，[lo..lo+force]区间内的元素已经是有序的，该区间长度为runLen。
                 runLen = force;
             }
 
             // Push run onto pending-run stack, and maybe merge
+            // 将游程推入到待运行的栈中，并且可能会合并
             ts.pushRun(lo, runLen);
             ts.mergeCollapse();
 
@@ -235,16 +260,34 @@ class ComparableTimSort {
      * of elements.  It requires O(n log n) compares, but O(n^2) data
      * movement (worst case).
      *
+     * 使用二分插入排序，对指定数组的指定部分进行排序。
+     * 这是用于排序小数量元素最好的方法。
+     * 它需要O(nlogn)次比较，但是O(n^2)数据移动（最坏的情况）。
+     *
      * If the initial part of the specified range is already sorted,
      * this method can take advantage of it: the method assumes that the
      * elements from index {@code lo}, inclusive, to {@code start},
      * exclusive are already sorted.
      *
+     * 如果指定范围的初始部分已经被排序，此方法能发挥它的优势：
+     * 此方法假定从索引lo（包括）到start(不包括）的元素已经被排序。
+     *
      * @param a the array in which a range is to be sorted
+     *
+     *          a：在范围里将被排序的数组
+     *
      * @param lo the index of the first element in the range to be sorted
+     *
+     *           lo：在范围里将被排序的首个元素的索引
+     *
      * @param hi the index after the last element in the range to be sorted
+     *
+     *           hi：在范围里将被排序的最后一个元素的索引
+     *
      * @param start the index of the first element in the range that is
      *        not already known to be sorted ({@code lo <= start <= hi})
+     *
+     *              start：在范围内首个已知的，还未被排序的元素的索引（lo<=start<=hi）
      */
     @SuppressWarnings({"fallthrough", "rawtypes", "unchecked"})
     private static void binarySort(Object[] a, int lo, int hi, int start) {
@@ -315,6 +358,7 @@ class ComparableTimSort {
             int n = start - left;  // The number of elements to move
 
             // Switch is just an optimization for arraycopy in default case
+            // 在默认情况下，开关对数组复制总是最优的
             switch (n) {
                 case 2:  a[left + 2] = a[left + 1];
                 case 1:  a[left + 1] = a[left];
@@ -420,22 +464,41 @@ class ComparableTimSort {
      * length. Natural runs shorter than this will be extended with
      * {@link #binarySort}.
      *
+     * 对于指定长度的数组，返回可接受的最小游程长度。
+     * 比此游程长度小的自然游程将使用binarySort而被扩展。
+     *
      * Roughly speaking, the computation is:
+     *
+     * 粗略地讲，计算为：
      *
      *  If n < MIN_MERGE, return n (it's too small to bother with fancy stuff).
      *  Else if n is an exact power of 2, return MIN_MERGE/2.
      *  Else return an int k, MIN_MERGE/2 <= k <= MIN_MERGE, such that n/k
      *   is close to, but strictly less than, an exact power of 2.
      *
+     *   如果n小于MIN_MERGE，则返回n（它太小了，以至于用花哨的方式都是一种困扰）。
+     *   如果n是2的精确幂，则返回MIN_MERGE/2。
+     *   否则返回k，MIN_MERGE/2<=k<=MIN_MERGE，这样n/k接近，但严格小于2的精准幂。
+     *
      * For the rationale, see listsort.txt.
      *
+     * 有关基本原理，请查看listsort.text.
+     *
      * @param n the length of the array to be sorted
+     *
+     *          n：将被排序的数组的长度
+     *
      * @return the length of the minimum run to be merged
+     *
+     * 返回将被归并的最小游程的长度
      */
     private static int minRunLength(int n) {
+        // 对参数断言
         assert n >= 0;
+
         int r = 0;      // Becomes 1 if any 1 bits are shifted off
         while (n >= MIN_MERGE) {
+            // n&1可以检测出n是奇数还是偶数，如果n是奇数，则r为1，如果n是偶数，则r为0
             r |= (n & 1);
             n >>= 1;
         }
@@ -445,8 +508,15 @@ class ComparableTimSort {
     /**
      * Pushes the specified run onto the pending-run stack.
      *
+     * 将指定游程推入到待运行栈中。
+     *
      * @param runBase index of the first element in the run
+     *
+     *                runBase：在游程里首个元素的索引
+     *
      * @param runLen  the number of elements in the run
+     *
+     *                runLen：游程里元素的数量
      */
     private void pushRun(int runBase, int runLen) {
         this.runBase[stackSize] = runBase;
@@ -458,23 +528,33 @@ class ComparableTimSort {
      * Examines the stack of runs waiting to be merged and merges adjacent runs
      * until the stack invariants are reestablished:
      *
+     * 检查待合并的游程栈，并且合并相邻游程，直到栈不变式被重新建立：
+     *
      *     1. runLen[i - 3] > runLen[i - 2] + runLen[i - 1]
      *     2. runLen[i - 2] > runLen[i - 1]
      *
      * This method is called each time a new run is pushed onto the stack,
      * so the invariants are guaranteed to hold for i < stackSize upon
      * entry to the method.
+     *
+     * 每次将新的游程推入到栈中，此方法都将被调用，
+     * 因此在输入方法时，保证不变量i<stackSize成立。
      */
     private void mergeCollapse() {
         while (stackSize > 1) {
             int n = stackSize - 2;
+
+            // 要保证前面的游程长度比较长，通过mergeAt方法来调整游程长度
+            // 若n>0，说明stackSize>=3，故需要满足以下不变式：runLen[i-3]>runLen[i-2]+runLen[i-1]
             if (n > 0 && runLen[n-1] <= runLen[n] + runLen[n+1]) {
                 if (runLen[n - 1] < runLen[n + 1])
                     n--;
                 mergeAt(n);
             } else if (runLen[n] <= runLen[n + 1]) {
+                // 需满足runLen[i-2]>runLen[i-1]
                 mergeAt(n);
             } else {
+                // 不变量被建立
                 break; // Invariant is established
             }
         }
@@ -502,6 +582,7 @@ class ComparableTimSort {
      */
     @SuppressWarnings("unchecked")
     private void mergeAt(int i) {
+        // 对一些变量进行断言
         assert stackSize >= 2;
         assert i >= 0;
         assert i == stackSize - 2 || i == stackSize - 3;
@@ -517,6 +598,8 @@ class ComparableTimSort {
          * Record the length of the combined runs; if i is the 3rd-last
          * run now, also slide over the last run (which isn't involved
          * in this merge).  The current run (i+1) goes away in any case.
+         *
+         * x
          */
         runLen[i] = len1 + len2;
         if (i == stackSize - 3) {

@@ -1022,6 +1022,7 @@ class Thread implements Runnable {
      * @revised 6.0
      */
     public static boolean interrupted() {
+        // 返回当前线程是否被中断，并清除中断标记
         return currentThread().isInterrupted(true);
     }
 
