@@ -582,7 +582,7 @@ class ComparableTimSort {
      */
     @SuppressWarnings("unchecked")
     private void mergeAt(int i) {
-        // 对一些变量进行断言
+        // 对一些变量进行断言，比如断言栈大小为2
         assert stackSize >= 2;
         assert i >= 0;
         assert i == stackSize - 2 || i == stackSize - 3;
@@ -591,6 +591,8 @@ class ComparableTimSort {
         int len1 = runLen[i];
         int base2 = runBase[i + 1];
         int len2 = runLen[i + 1];
+
+        // 对游程初始地址和游程长度做一些断言
         assert len1 > 0 && len2 > 0;
         assert base1 + len1 == base2;
 
@@ -601,6 +603,7 @@ class ComparableTimSort {
          *
          * x
          */
+        // 目前只合并3个游程中前2个游程的长度
         runLen[i] = len1 + len2;
         if (i == stackSize - 3) {
             runBase[i + 1] = runBase[i + 2];
@@ -611,6 +614,9 @@ class ComparableTimSort {
         /*
          * Find where the first element of run2 goes in run1. Prior elements
          * in run1 can be ignored (because they're already in place).
+         *
+         * 找到游程2的首个元素在游程1开始的位置。
+         * 游程1之前的元素能被忽略（因为它们已经到位）。
          */
         int k = gallopRight((Comparable<Object>) a[base2], a, base1, len1, 0);
         assert k >= 0;
@@ -725,7 +731,7 @@ class ComparableTimSort {
      */
     private static int gallopRight(Comparable<Object> key, Object[] a,
             int base, int len, int hint) {
-        assert len > 0 && hint >= 0 && hint < len;
+        assert hint >= 0 && hint < len;
 
         int ofs = 1;
         int lastOfs = 0;
