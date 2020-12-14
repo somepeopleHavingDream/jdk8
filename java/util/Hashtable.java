@@ -179,16 +179,21 @@ public class Hashtable<K,V>
      *             than zero, or if the load factor is nonpositive.
      */
     public Hashtable(int initialCapacity, float loadFactor) {
+        // 对入参进行判断
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Illegal Capacity: "+
                                                initialCapacity);
         if (loadFactor <= 0 || Float.isNaN(loadFactor))
             throw new IllegalArgumentException("Illegal Load: "+loadFactor);
 
+        // 如果入参初始容量为0，则设置为1
         if (initialCapacity==0)
             initialCapacity = 1;
+        // 设置加载因子
         this.loadFactor = loadFactor;
+        // 创建实体数组
         table = new Entry<?,?>[initialCapacity];
+        // 设置阈值
         threshold = (int)Math.min(initialCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
     }
 
@@ -209,6 +214,7 @@ public class Hashtable<K,V>
      * and load factor (0.75).
      */
     public Hashtable() {
+        // 设置初始容量为11，加载因子为0.75f
         this(11, 0.75f);
     }
 
@@ -1251,6 +1257,8 @@ public class Hashtable<K,V>
 
     /**
      * Hashtable bucket collision list entry
+     *
+     * Hashtable桶碰撞列表实体
      */
     private static class Entry<K,V> implements Map.Entry<K,V> {
         final int hash;

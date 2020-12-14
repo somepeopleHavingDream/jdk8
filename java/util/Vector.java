@@ -781,6 +781,7 @@ public class Vector<E>
      * @since 1.2
      */
     public synchronized E get(int index) {
+        // 该方法被同步
         // 对要获取元素的下标做参数判断
         if (index >= elementCount)
             throw new ArrayIndexOutOfBoundsException(index);
@@ -817,6 +818,7 @@ public class Vector<E>
      * @since 1.2
      */
     public synchronized boolean add(E e) {
+        // 该方法被同步
         // 增加修改次数，用于快速失败机制
         modCount++;
 
