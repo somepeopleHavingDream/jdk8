@@ -134,11 +134,15 @@ public class Hashtable<K,V>
 
     /**
      * The hash table data.
+     *
+     * 哈希表数据
      */
     private transient Entry<?,?>[] table;
 
     /**
      * The total number of entries in the hash table.
+     *
+     * 哈希表中条目的总数量
      */
     private transient int count;
 
@@ -394,28 +398,40 @@ public class Hashtable<K,V>
      */
     @SuppressWarnings("unchecked")
     protected void rehash() {
+        // 保存旧容量和旧表
         int oldCapacity = table.length;
         Entry<?,?>[] oldMap = table;
 
         // overflow-conscious code
+        // 有溢出意识的代码
+        // 计算出新容量的大小（新容量的最大值为MAX_ARRAY_SIZE）
         int newCapacity = (oldCapacity << 1) + 1;
         if (newCapacity - MAX_ARRAY_SIZE > 0) {
+            // 如果旧容量已经是最大数组大小，则不进行扩容，直接用当前容量
             if (oldCapacity == MAX_ARRAY_SIZE)
                 // Keep running with MAX_ARRAY_SIZE buckets
+                // 保持用MAX_ARRAY_SIZE个桶运行
                 return;
             newCapacity = MAX_ARRAY_SIZE;
         }
+
+        // 创建新的哈希表
         Entry<?,?>[] newMap = new Entry<?,?>[newCapacity];
 
+        // 修改次数再加1，因为对哈希表的元素数量做了变更。即，即将对哈希表扩容。
         modCount++;
+
+        // 重新计算新的阈值
         threshold = (int)Math.min(newCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
         table = newMap;
 
+        // 从旧表的最后的首条目开始，直至所有的条目被处理完
         for (int i = oldCapacity ; i-- > 0 ;) {
             for (Entry<K,V> old = (Entry<K,V>)oldMap[i] ; old != null ; ) {
                 Entry<K,V> e = old;
                 old = old.next;
 
+                // 找到当前条目在新哈希表中的下标位置，并在该位置放置新的条目
                 int index = (e.hash & 0x7FFFFFFF) % newCapacity;
                 e.next = (Entry<K,V>)newMap[index];
                 newMap[index] = e;
@@ -424,11 +440,14 @@ public class Hashtable<K,V>
     }
 
     private void addEntry(int hash, K key, V value, int index) {
+        // 修改次数加1，用于快速失败机制
         modCount++;
 
         Entry<?,?> tab[] = table;
+        // 如果哈希表的总条目超过阈值，则需要扩容
         if (count >= threshold) {
             // Rehash the table if the threshold is exceeded
+            // 如果阈值被超过，则需再哈希表
             rehash();
 
             tab = table;
@@ -461,25 +480,37 @@ public class Hashtable<K,V>
      * @see     #get(Object)
      */
     public synchronized V put(K key, V value) {
+        // 此方法被同步
+
         // Make sure the value is not null
+        // 确保值非空，如果值为空，则抛出空指针异常
         if (value == null) {
             throw new NullPointerException();
         }
 
         // Makes sure the key is not already in the hashtable.
+        // 确保键还未在hashtable里
         Entry<?,?> tab[] = table;
+        // 计算出键的哈希码
         int hash = key.hashCode();
+        // 计算出键在哈希表中的下标
         int index = (hash & 0x7FFFFFFF) % tab.length;
+        // 根据下标，拿到键在哈希表中的第一个条目
         @SuppressWarnings("unchecked")
         Entry<K,V> entry = (Entry<K,V>)tab[index];
+
+        // 因为可能会有碰撞的情况存在，即多个键的哈希索引值相同，故在这种情况下，需要遍历条目所对应的链表，因为此哈希表使用链式法来解决哈希冲突
         for(; entry != null ; entry = entry.next) {
+            // 找到键所对应的那个条目，必须键哈希值相同，键内容也相同
             if ((entry.hash == hash) && entry.key.equals(key)) {
+                // 返回旧值，设置新值
                 V old = entry.value;
                 entry.value = value;
                 return old;
             }
         }
 
+        // 如果没有找到键所对应的那个条目，则插入新的条目
         addEntry(hash, key, value, index);
         return null;
     }
