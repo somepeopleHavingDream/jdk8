@@ -3206,12 +3206,17 @@ public class Arrays {
      * @since 1.6
      */
     public static <T,U> T[] copyOf(U[] original, int newLength, Class<? extends T[]> newType) {
+        // 创建一个新的数组实例
         @SuppressWarnings("unchecked")
         T[] copy = ((Object)newType == (Object)Object[].class)
             ? (T[]) new Object[newLength]
             : (T[]) Array.newInstance(newType.getComponentType(), newLength);
+
+        // 给新数组实例赋值
         System.arraycopy(original, 0, copy, 0,
                          Math.min(original.length, newLength));
+
+        // 返回新数组
         return copy;
     }
 

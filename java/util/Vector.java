@@ -104,6 +104,9 @@ public class Vector<E>
      * {@code elementData[elementCount-1]} are the actual items.
      *
      * @serial
+     *
+     * 在此Vector对象里有效成员的数量。
+     * 成员elementData[0]到elementData[elementCount-1]都是实际的元素。
      */
     protected int elementCount;
 
@@ -112,6 +115,9 @@ public class Vector<E>
      * incremented when its size becomes greater than its capacity.  If
      * the capacity increment is less than or equal to zero, the capacity
      * of the vector is doubled each time it needs to grow.
+     *
+     * 当容器的大小变得比它的容量大时，矢量容量自动增长的数量。
+     * 如果容量增长量少于或者等于0，则矢量的容量在每次需要增长时会加倍。
      *
      * @serial
      */
@@ -253,6 +259,8 @@ public class Vector<E>
      */
     private void ensureCapacityHelper(int minCapacity) {
         // overflow-conscious code
+        // 有溢出意识的代码
+        // 如果需要的最小容量比数组当前的长度大，则扩容
         if (minCapacity - elementData.length > 0)
             grow(minCapacity);
     }
@@ -262,24 +270,42 @@ public class Vector<E>
      * Some VMs reserve some header words in an array.
      * Attempts to allocate larger arrays may result in
      * OutOfMemoryError: Requested array size exceeds VM limit
+     *
+     * 要分配的数组的最大大小。
+     * 一些虚拟机在数组里保留了一些头字。
+     * 尝试去申请更大的数组可能会引起OutOfMemoryError：请求的数组大小超过虚拟机限制。
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     private void grow(int minCapacity) {
         // overflow-conscious code
+        // 有溢出意识的代码
+
+        // 旧容量
         int oldCapacity = elementData.length;
+        // 新容量
         int newCapacity = oldCapacity + ((capacityIncrement > 0) ?
                                          capacityIncrement : oldCapacity);
+
+        // 如果上述计算出来的新容量都比需要的最小容量小，则将新容量的值置为最小容量
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
+
+        // 如果新容量比最大数组大小还要大
         if (newCapacity - MAX_ARRAY_SIZE > 0)
+            // 赋予新容量更大的容量值
             newCapacity = hugeCapacity(minCapacity);
+
+        // 重新赋值
         elementData = Arrays.copyOf(elementData, newCapacity);
     }
 
     private static int hugeCapacity(int minCapacity) {
+        // 溢出判断
         if (minCapacity < 0) // overflow
             throw new OutOfMemoryError();
+
+        // 如果需要的最小容量比最大数组大小还要大，则返回整型的最大值为新容量，否则返回最大数组大小为新容量的值
         return (minCapacity > MAX_ARRAY_SIZE) ?
             Integer.MAX_VALUE :
             MAX_ARRAY_SIZE;
@@ -789,8 +815,13 @@ public class Vector<E>
      * @since 1.2
      */
     public synchronized boolean add(E e) {
+        // 增加修改次数，用于快速失败机制
         modCount++;
+
+        // 确保容器容量不会溢出
         ensureCapacityHelper(elementCount + 1);
+
+        // 增加一个新元素，返回真
         elementData[elementCount++] = e;
         return true;
     }

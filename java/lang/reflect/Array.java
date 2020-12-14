@@ -72,6 +72,7 @@ class Array {
      */
     public static Object newInstance(Class<?> componentType, int length)
         throws NegativeArraySizeException {
+        // 根据给定的类类型，生成一个新数组实例
         return newArray(componentType, length);
     }
 
