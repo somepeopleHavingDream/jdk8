@@ -781,9 +781,11 @@ public class Vector<E>
      * @since 1.2
      */
     public synchronized E get(int index) {
+        // 对要获取元素的下标做参数判断
         if (index >= elementCount)
             throw new ArrayIndexOutOfBoundsException(index);
 
+        // 返回该下标处的元素
         return elementData(index);
     }
 
