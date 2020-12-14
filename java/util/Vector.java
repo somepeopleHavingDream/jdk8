@@ -131,10 +131,15 @@ public class Vector<E>
      *         is negative
      */
     public Vector(int initialCapacity, int capacityIncrement) {
+        // 调用父类构造方法
         super();
+
+        // 对入参做校验
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Illegal Capacity: "+
                                                initialCapacity);
+
+        // 设置相关属性
         this.elementData = new Object[initialCapacity];
         this.capacityIncrement = capacityIncrement;
     }
@@ -157,6 +162,7 @@ public class Vector<E>
      * zero.
      */
     public Vector() {
+        // 设置初始容量为10
         this(10);
     }
 
