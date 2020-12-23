@@ -232,6 +232,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * The default initial capacity - MUST be a power of two.
+     *
+     * 默认初始容量——必须是2的幂。（默认初始容量为16）
      */
     static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
 
@@ -239,11 +241,16 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * The maximum capacity, used if a higher value is implicitly specified
      * by either of the constructors with arguments.
      * MUST be a power of two <= 1<<30.
+     *
+     * 如果更高的值被带参数的构造器隐式地指定，将使用最大容量。
+     * 必须是小于等于1<<30的2的次幂。
      */
     static final int MAXIMUM_CAPACITY = 1 << 30;
 
     /**
      * The load factor used when none specified in constructor.
+     *
+     * 当构造器中没有被指定的，此加载因子则被使用
      */
     static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
@@ -392,6 +399,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * necessary. When allocated, length is always a power of two.
      * (We also tolerate length zero in some operations to allow
      * bootstrapping mechanics that are currently not needed.)
+     *
+     * 表，在首次使用时初始化，并且在需要时重新分配大小。
+     * 当被分配时，长度总是2的幂次。
+     * （我们也容忍在一些操作里长度为0，以便允许当前并不需要的引导机制。）
      */
     transient Node<K,V>[] table;
 
@@ -403,6 +414,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * The number of key-value mappings contained in this map.
+     *
+     * 在此映射中包含的键值对映射的数量。
      */
     transient int size;
 
@@ -418,6 +431,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * The next size value at which to resize (capacity * load factor).
      *
+     * 下一次要重新分配的大小值（容量×加载因子）
+     *
      * @serial
      */
     // (The javadoc description is true upon serialization.
@@ -428,6 +443,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * The load factor for the hash table.
+     *
+     * 用于哈希表的加载因子
      *
      * @serial
      */
@@ -471,8 +488,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * Constructs an empty <tt>HashMap</tt> with the default initial capacity
      * (16) and the default load factor (0.75).
+     *
+     * 构造一个带有默认初始容量16和默认加载因子0.75的空HashMap
      */
     public HashMap() {
+        // 所有其他字段都是默认值
         this.loadFactor = DEFAULT_LOAD_FACTOR; // all other fields defaulted
     }
 
@@ -615,6 +635,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * Implements Map.put and related methods.
      *
+     * Map.put和相关方法的实现。
+     *
      * @param hash hash for key
      * @param key the key
      * @param value the value to put
@@ -625,6 +647,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
+
+        // 如果哈希表为空，或者长度为0
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
         if ((p = tab[i = (n - 1) & hash]) == null)
@@ -672,72 +696,116 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * elements from each bin must either stay at same index, or move
      * with a power of two offset in the new table.
      *
+     * 初始化或者加倍表大小。
+     * 如果为空，则按照字段threshold里的初始容量目标分配。
+     * 否则，因为我们使用2的幂次表达式，每个bin必须要么以相同的索引待着，要么以2的幂次个偏移移动到新表里。
+     *
      * @return the table
      */
     final Node<K,V>[] resize() {
+        // 记录旧表、旧表容量、旧表阈值
         Node<K,V>[] oldTab = table;
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
         int oldThr = threshold;
+
         int newCap, newThr = 0;
+        // 如果旧表容量不为0，说明旧表中存有元素
         if (oldCap > 0) {
+            // 如果旧表容量超过或等于最大容量，则将阈值设置为整型的最大值，并且返回旧表
             if (oldCap >= MAXIMUM_CAPACITY) {
                 threshold = Integer.MAX_VALUE;
                 return oldTab;
             }
+            // 否则，将新表的容量扩展为旧表容量的1倍，并且在旧表容量大于等于默认初始容量16时，设置新的阈值为旧阈值的一倍
             else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
                      oldCap >= DEFAULT_INITIAL_CAPACITY)
+                // 加倍阈值
                 newThr = oldThr << 1; // double threshold
         }
+        // 如果前面的条件不成立，且旧阈值大于0，则将新表的容量置于旧阈值处
         else if (oldThr > 0) // initial capacity was placed in threshold
             newCap = oldThr;
+        // 前面的条件都不满足，则使用默认的处理流程
         else {               // zero initial threshold signifies using defaults
+            // 0初始阈值标志着使用默认
+            // 设新表容量为默认初始容量
             newCap = DEFAULT_INITIAL_CAPACITY;
+            // 新表阈值为默认加载因子×默认初始容量
             newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
         }
+
+        // 如果新阈值为0，则重新计算新阈值
         if (newThr == 0) {
             float ft = (float)newCap * loadFactor;
             newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
                       (int)ft : Integer.MAX_VALUE);
         }
+        // 设置阈值
         threshold = newThr;
+
+        // 生成并设置新表
         @SuppressWarnings({"rawtypes","unchecked"})
         Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
         table = newTab;
+
+        // 如果旧表不为空，说明旧表中存留元素
         if (oldTab != null) {
+            // 遍历旧表
             for (int j = 0; j < oldCap; ++j) {
+                // 如果当前首结点不为空
                 Node<K,V> e;
                 if ((e = oldTab[j]) != null) {
+                    // 将旧表的当前首结点置为空
                     oldTab[j] = null;
+
+                    // 如果当前首结点的下一个结点为空，则在新表的新位置处（e.hash & (newCap - 1))存储该结点
                     if (e.next == null)
                         newTab[e.hash & (newCap - 1)] = e;
+                    // 如果当前首结点是树型结点，则另外处理，此处不过多追究……
                     else if (e instanceof TreeNode)
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+                    // 如果进入到这个分支，说明当前首结点存在下一个链接的结点
                     else { // preserve order
                         Node<K,V> loHead = null, loTail = null;
                         Node<K,V> hiHead = null, hiTail = null;
                         Node<K,V> next;
+
+                        // 循环，处理水平方向的元素
                         do {
+                            // 记录当前结点的下一个结点
                             next = e.next;
+                            // 以表达式(e.hash & oldCap) == 0的表达式结果来将当前元素链表上的结点进行分类
+                            // 由百度大神的推导所知，满足e.hash&oldCap=0的元素，其在新旧数组中的索引位置不变，具体推导过程需再查阅相关资料。
+                            // 如果当前结点的该条件表达式为真，则被编入到low链表，之后会存入到新表中和旧表相同的位置
                             if ((e.hash & oldCap) == 0) {
                                 if (loTail == null)
                                     loHead = e;
                                 else
                                     loTail.next = e;
+                                // loTail始终指向low链表的最后一个元素
                                 loTail = e;
                             }
+                            // 如果当前结点的该条件表达式为假，则被编入到high链表，之后会存入到新表中相对于旧表原位置偏移旧表容量个位置的地方
                             else {
                                 if (hiTail == null)
                                     hiHead = e;
                                 else
                                     hiTail.next = e;
+                                // hiTail始终指向high链表的最后一个元素
                                 hiTail = e;
                             }
+                            // 当水平方向的下一个结点不为空时，则继续开始循环
                         } while ((e = next) != null);
+
+                        // 如果loTail不为空，则说明low链表存有元素
                         if (loTail != null) {
+                            // 处理low链表的尾结点，并且在新表的当前首结点的位置处存储low链表的首结点
                             loTail.next = null;
                             newTab[j] = loHead;
                         }
+                        // 如果hiTail不为空，则说明high链表存有元素
                         if (hiTail != null) {
+                            // 处理high链表的尾结点，并且在新表的当前首结点的位置处，并将该位置偏移oldCap个位置，然后存储high链表的首结点
                             hiTail.next = null;
                             newTab[j + oldCap] = hiHead;
                         }
@@ -745,6 +813,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 }
             }
         }
+
+        // 返回新表
         return newTab;
     }
 

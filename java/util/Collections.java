@@ -2001,6 +2001,10 @@ public class Collections {
         private static final long serialVersionUID = 3053995032091335093L;
 
         final Collection<E> c;  // Backing Collection
+
+        /**
+         * 用于同步的对象，即互斥量
+         */
         final Object mutex;     // Object on which to synchronize
 
         SynchronizedCollection(Collection<E> c) {
@@ -2376,6 +2380,7 @@ public class Collections {
      * @return a synchronized view of the specified list.
      */
     public static <T> List<T> synchronizedList(List<T> list) {
+        // 根据入参集合对象的类型是否是随机访问类型，生成不同的同步集合对象
         return (list instanceof RandomAccess ?
                 new SynchronizedRandomAccessList<>(list) :
                 new SynchronizedList<>(list));
@@ -2416,12 +2421,14 @@ public class Collections {
         }
 
         public E get(int index) {
+            // 此方法也加了锁
             synchronized (mutex) {return list.get(index);}
         }
         public E set(int index, E element) {
             synchronized (mutex) {return list.set(index, element);}
         }
         public void add(int index, E element) {
+            // 实际上，这里增加了一个锁（将该对象本身作为一把锁），内部的添加机制，仍然用的是入参集合对象的添加机制。
             synchronized (mutex) {list.add(index, element);}
         }
         public E remove(int index) {

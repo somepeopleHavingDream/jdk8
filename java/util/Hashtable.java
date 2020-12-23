@@ -370,6 +370,8 @@ public class Hashtable<K,V>
      */
     @SuppressWarnings("unchecked")
     public synchronized V get(Object key) {
+        // 该方法被synchronized修饰
+
         Entry<?,?> tab[] = table;
         int hash = key.hashCode();
         int index = (hash & 0x7FFFFFFF) % tab.length;
