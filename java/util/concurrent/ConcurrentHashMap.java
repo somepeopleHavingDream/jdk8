@@ -590,6 +590,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /*
      * Encodings for Node hash fields. See above for explanation.
+     *
+     * 用于结点哈希字段的编码。
+     * 请看下面的解释。
+     */
+    /**
+     * 用于前进结点的哈希
      */
     static final int MOVED     = -1; // hash for forwarding nodes
     static final int TREEBIN   = -2; // hash for roots of trees
@@ -769,6 +775,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * The array of bins. Lazily initialized upon first insertion.
      * Size is always a power of two. Accessed directly by iterators.
+     *
+     * 桶数组。
+     * 在首次插入时懒加载。
+     * 大小始终是2的幂。
+     * 可被迭代器直接访问。
      */
     transient volatile Node<K,V>[] table;
 
@@ -791,6 +802,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * when table is null, holds the initial table size to use upon
      * creation, or 0 for default. After initialization, holds the
      * next element count value upon which to resize the table.
+     *
+     * 控制表初始化和重新分配大小。
+     * 当值为负时，表将会被初始化或者重新分配大小：
+     * -1用于初始化。
+     * 否则，当表为空，保留创建时去使用的初始表大小，或者默认为0。
+     * 在初始化之后，保留下一个元素的计数值，以在此基础上调整表大小。
      */
     private transient volatile int sizeCtl;
 
@@ -819,6 +836,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Creates a new, empty map with the default initial table size (16).
+     *
+     * 创建一个带有默认初始表大小（16）的新的空表
      */
     public ConcurrentHashMap() {
     }
@@ -989,6 +1008,101 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         return false;
     }
 
+    /** Implementation for put and putIfAbsent */
+    // 用于put和putIfAbsent的实现
+    final V putVal(K key, V value, boolean onlyIfAbsent) {
+        // 如果键值任一一个为空，则抛出空指针异常，这说明ConcurrentHashMap的键和值不支持null
+        if (key == null || value == null) throw new NullPointerException();
+
+        // 将键的哈希码再散列一次，计算出新的哈希值
+        int hash = spread(key.hashCode());
+
+        int binCount = 0;
+
+        // 遍历表，进行相关操作
+        for (Node<K,V>[] tab = table;;) {
+            Node<K,V> f; int n, i, fh;
+
+            // 如果表为空或者表的大小为0，则进行初始化表操作
+            if (tab == null || (n = tab.length) == 0)
+                tab = initTable();
+            // 如果哈希值对应的结点为空
+            else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+                // 在该位置cas地插入一个新的结点，并退出循环
+                if (casTabAt(tab, i, null,
+                        new Node<K,V>(hash, key, value, null)))
+                    break;                   // no lock when adding to empty bin
+            }
+            // 如果对应位置的结点不为空，且对应位置的结点的哈希为-1，说明当前表正在被其他线程执行重新分配大小操作，对此不做更进一步探究
+            else if ((fh = f.hash) == MOVED)
+                tab = helpTransfer(tab, f);
+            // 对应位置的结点不为空，并且对应位置的结点的哈希也不为-1，则进行其他操作
+            else {
+                V oldVal = null;
+
+                // 锁住该结点
+                synchronized (f) {
+                    // 一般来说tabAt(tab, i) == f是成立的，但是必须考虑到其他线程可能带来的情况，因此此处再判断一次
+                    if (tabAt(tab, i) == f) {
+                        // 如果当前结点的哈希值大于等于0（似乎当前的哈希值大于等于0意味着结点类型不是树型结点，也就是说结点的哈希值代表了一些东西，比如结点类型之类的）
+                        if (fh >= 0) {
+                            // 遍历水平方向的结点，同时记录结点的个数
+                            binCount = 1;
+                            for (Node<K,V> e = f;; ++binCount) {
+                                K ek;
+
+                                // 在水平方向上找到了对应位置的结点
+                                if (e.hash == hash &&
+                                        ((ek = e.key) == key ||
+                                                (ek != null && key.equals(ek)))) {
+                                    // 记录原结点的旧值，并退出水平循环
+                                    oldVal = e.val;
+                                    if (!onlyIfAbsent)
+                                        e.val = value;
+                                    break;
+                                }
+
+                                // 如果遍历到了链表的最后一个结点处，则在水平链表尾部插入一个新结点，然后退出水平循环
+                                Node<K,V> pred = e;
+                                if ((e = e.next) == null) {
+                                    pred.next = new Node<K,V>(hash, key,
+                                            value, null);
+                                    break;
+                                }
+                            }
+                        }
+                        // 如果当前结点的哈希值小于等于0，且当前结点是树型结点（对于树型结点的处理这里不做深入探究）
+                        else if (f instanceof TreeBin) {
+                            Node<K,V> p;
+                            binCount = 2;
+                            if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
+                                    value)) != null) {
+                                oldVal = p.val;
+                                if (!onlyIfAbsent)
+                                    p.val = value;
+                            }
+                        }
+                    }
+                }
+
+                // 如果binCount不为0，说明表中存在对应的位置，且该位置上存储了一些结点
+                if (binCount != 0) {
+                    // 链表的结点数超过树化阈值，进行树化阈值操作
+                    if (binCount >= TREEIFY_THRESHOLD)
+                        treeifyBin(tab, i);
+                    // 旧值不为空，则返回旧值，并退出
+                    if (oldVal != null)
+                        return oldVal;
+                    break;
+                }
+            }
+        }
+
+        // 更新表的大小，并返回
+        addCount(1L, binCount);
+        return null;
+    }
+
     /**
      * Maps the specified key to the specified value in this table.
      * Neither the key nor the value can be null.
@@ -1004,71 +1118,6 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     public V put(K key, V value) {
         return putVal(key, value, false);
-    }
-
-    /** Implementation for put and putIfAbsent */
-    final V putVal(K key, V value, boolean onlyIfAbsent) {
-        if (key == null || value == null) throw new NullPointerException();
-        int hash = spread(key.hashCode());
-        int binCount = 0;
-        for (Node<K,V>[] tab = table;;) {
-            Node<K,V> f; int n, i, fh;
-            if (tab == null || (n = tab.length) == 0)
-                tab = initTable();
-            else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
-                if (casTabAt(tab, i, null,
-                             new Node<K,V>(hash, key, value, null)))
-                    break;                   // no lock when adding to empty bin
-            }
-            else if ((fh = f.hash) == MOVED)
-                tab = helpTransfer(tab, f);
-            else {
-                V oldVal = null;
-                synchronized (f) {
-                    if (tabAt(tab, i) == f) {
-                        if (fh >= 0) {
-                            binCount = 1;
-                            for (Node<K,V> e = f;; ++binCount) {
-                                K ek;
-                                if (e.hash == hash &&
-                                    ((ek = e.key) == key ||
-                                     (ek != null && key.equals(ek)))) {
-                                    oldVal = e.val;
-                                    if (!onlyIfAbsent)
-                                        e.val = value;
-                                    break;
-                                }
-                                Node<K,V> pred = e;
-                                if ((e = e.next) == null) {
-                                    pred.next = new Node<K,V>(hash, key,
-                                                              value, null);
-                                    break;
-                                }
-                            }
-                        }
-                        else if (f instanceof TreeBin) {
-                            Node<K,V> p;
-                            binCount = 2;
-                            if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
-                                                           value)) != null) {
-                                oldVal = p.val;
-                                if (!onlyIfAbsent)
-                                    p.val = value;
-                            }
-                        }
-                    }
-                }
-                if (binCount != 0) {
-                    if (binCount >= TREEIFY_THRESHOLD)
-                        treeifyBin(tab, i);
-                    if (oldVal != null)
-                        return oldVal;
-                    break;
-                }
-            }
-        }
-        addCount(1L, binCount);
-        return null;
     }
 
     /**
@@ -1101,46 +1150,79 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Implementation for the four public remove/replace methods:
      * Replaces node value with v, conditional upon match of cv if
      * non-null.  If resulting value is null, delete.
+     *
+     * 用于4个公共remove/replace方法的实现：
+     * 用v替换结点，在满足cv（如果cv不为空）的条件下。
+     * 如果结果值为空，则删除。
      */
     final V replaceNode(Object key, V value, Object cv) {
+        // 将键的哈希值再散列一次，计算出新的哈希值
         int hash = spread(key.hashCode());
+
+        // 遍历表
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
+
+            // 如果表为空或者表长度为0或者哈希值对应的结点为空，则退出循环
             if (tab == null || (n = tab.length) == 0 ||
                 (f = tabAt(tab, i = (n - 1) & hash)) == null)
                 break;
+            // 如果存在该哈希值对应位置的结点，且该结点的类型说明当前表正在重新调整大小，则做其他操作
             else if ((fh = f.hash) == MOVED)
                 tab = helpTransfer(tab, f);
+            // 如果存在该哈希值对应位置的结点，且该结点是一个正常（即哈希表正常，没有处在重新调整的过程中）
             else {
                 V oldVal = null;
                 boolean validated = false;
+
+                // 锁住哈希值对应位置的结点
                 synchronized (f) {
+                    // 同put方法一样，此处判断是避免多线程环境下tabAt(tab,i)==f不相同的情况
                     if (tabAt(tab, i) == f) {
+                        // 如果该结点的哈希索引大于等于0
                         if (fh >= 0) {
                             validated = true;
+
+                            // 对该结点所处的链表进行水平遍历
                             for (Node<K,V> e = f, pred = null;;) {
                                 K ek;
+
+                                // 如果水平遍历找到了对应位置的结点，则进行相关操作后便退出
                                 if (e.hash == hash &&
                                     ((ek = e.key) == key ||
                                      (ek != null && key.equals(ek)))) {
+                                    // 记录旧值
                                     V ev = e.val;
+
+                                    // 如果期望的旧值cv满足实际的值ev的相关条件
                                     if (cv == null || cv == ev ||
                                         (ev != null && cv.equals(ev))) {
+                                        // 记录需要返回的旧值
                                         oldVal = ev;
+
+                                        // 如果入参值不为空，则用入参值覆盖旧有值
                                         if (value != null)
                                             e.val = value;
+                                        // 如果入参值为空，且水平方向的链表上存在上一个结点，则让上一个结点直接链接当前结点的后一个结点
                                         else if (pred != null)
                                             pred.next = e.next;
+                                        // 如果入参值为空，且水平方向上不存在上一个结点，则说明当前结点是水平方向链表的首结点，那么让表存储该位置的下一个位置的结点
                                         else
                                             setTabAt(tab, i, e.next);
                                     }
+
+                                    // 退出循环
                                     break;
                                 }
+
+                                // 继续水平遍历，直至遍历到水平链表末尾处
                                 pred = e;
                                 if ((e = e.next) == null)
                                     break;
                             }
                         }
+                        // 如果该结点的哈希索引小于0，且该结点的类型为树型结点（此处，对树型结点不做深究，抽时间再看>_<）
+                        // 树化的过程，跟红黑树有关，而且根据作者的描述，树化过程是在极端条件下才会进行的操作，因此有空抽时间再看吧<_>
                         else if (f instanceof TreeBin) {
                             validated = true;
                             TreeBin<K,V> t = (TreeBin<K,V>)f;
@@ -1160,12 +1242,18 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                         }
                     }
                 }
+
+                // 如果结点有效
                 if (validated) {
+                    // 如果对应结点的旧值不为空，则返回旧值
                     if (oldVal != null) {
+                        // 如果旧值不为空，且入参值为空，则更新表的大小
                         if (value == null)
                             addCount(-1L, -1);
                         return oldVal;
                     }
+
+                    // 退出循环
                     break;
                 }
             }
@@ -1552,8 +1640,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @throws NullPointerException if any of the arguments are null
      */
     public boolean replace(K key, V oldValue, V newValue) {
+        // 如果入参中任一为空，则抛出空指针异常
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
+
         return replaceNode(key, newValue, oldValue) != null;
     }
 
@@ -2219,14 +2309,21 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Initializes table, using the size recorded in sizeCtl.
+     *
+     * 初始化表，使用记录在sizeCtl里的大小。
      */
     private final Node<K,V>[] initTable() {
         Node<K,V>[] tab; int sc;
+
+        // 总的来说，initTable方法是根据sizeCtl来进行调整的，至于为什么是通过sizeCtl来进行调整的，原理还需探究
+        // 当表为空或者表的长度为0时，进行循环操作
         while ((tab = table) == null || tab.length == 0) {
+            // 如果sizeCtl<0，则让出cpu资源
             if ((sc = sizeCtl) < 0)
                 Thread.yield(); // lost initialization race; just spin
             else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {
                 try {
+                    // 在U.compareAndSwapInt(this, SIZECTL, sr, -1)为真的情况下，生成数组
                     if ((tab = table) == null || tab.length == 0) {
                         int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
                         @SuppressWarnings("unchecked")
@@ -2293,6 +2390,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Helps transfer if a resize is in progress.
+     *
+     * 如果重新分配大小处于执行期间，则帮助进行转移。
      */
     final Node<K,V>[] helpTransfer(Node<K,V>[] tab, Node<K,V> f) {
         Node<K,V>[] nextTab; int sc;

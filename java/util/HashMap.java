@@ -573,6 +573,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @see #put(Object, Object)
      */
     public V get(Object key) {
+        // 没找到，就返回空，找到则返回结点中的值
         Node<K,V> e;
         return (e = getNode(hash(key), key)) == null ? null : e.value;
     }
@@ -585,16 +586,26 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @return the node, or null if none
      */
     final Node<K,V> getNode(int hash, Object key) {
+        // 通过哈希码和键对象，找到键所在的那个实体结点
         Node<K,V>[] tab; Node<K,V> first, e; int n; K k;
+
+        // 如果表不为空，且表长度大于0，且通过入参哈希码找到的垂直方向的结点不为空
         if ((tab = table) != null && (n = tab.length) > 0 &&
             (first = tab[(n - 1) & hash]) != null) {
+            // 如果找到的垂直方向的结点是要找到的结点，则直接返回
             if (first.hash == hash && // always check first node
                 ((k = first.key) == key || (key != null && key.equals(k))))
                 return first;
+
+            // 否则，在水平方向上寻找与目标对应的结点，如果不存在目标结点，则返回空
             if ((e = first.next) != null) {
+                // 如果水平方向的首结点是树型结点，则另做处理，此处不细究，原理涉及到红黑树
                 if (first instanceof TreeNode)
                     return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+
+                // 在水平方向循环处理
                 do {
+                    // 找到就返回
                     if (e.hash == hash &&
                         ((k = e.key) == key || (key != null && key.equals(k))))
                         return e;
@@ -648,43 +659,73 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                    boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
 
-        // 如果哈希表为空，或者长度为0
+        // 如果哈希表为空，或者长度为0，则需要扩容，并且记录扩容后的长度
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
+
+        // 如果通过入参哈希值计算出来的位置，在表中没有元素存放在该位置，则新生成一个结点，将新生结点存放到该位置
         if ((p = tab[i = (n - 1) & hash]) == null)
             tab[i] = newNode(hash, key, value, null);
+        // 否则，说明哈希值对应的位置已经存在相关结点
         else {
             Node<K,V> e; K k;
+
+            // 存在三种情况，第一种情况：对应位置的结点键与入参键相同，则直接用入参值覆盖掉原来结点的值
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
+            // 如果对应位置的结点是树型结点，则做另外处理，涉及到红黑树
             else if (p instanceof TreeNode)
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+            // 否则，进行水平方向的其他操作
             else {
                 for (int binCount = 0; ; ++binCount) {
+                    // 如果水平方向上无下一个结点，则生成一个新的结点，并将上一个结点与该新生结点进行连接
                     if ((e = p.next) == null) {
                         p.next = newNode(hash, key, value, null);
+
+                        // 如果新增一个结点后链表的长度超过树化阈值，则将该链表进行树化操作
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
+
+                        // 退出当前水平遍历循环
                         break;
                     }
+
+                    // 如果在水平遍历结点的过程中，找到了具有相同哈希值和键的结点，则退出当前水平遍历循环
                     if (e.hash == hash &&
                         ((k = e.key) == key || (key != null && key.equals(k))))
                         break;
+
                     p = e;
                 }
             }
+
+            // 存在对于键的映射
             if (e != null) { // existing mapping for key
+                // 记录旧值，用于返回
                 V oldValue = e.value;
+
+                // 看情况更新该结点的值
                 if (!onlyIfAbsent || oldValue == null)
                     e.value = value;
+
+                // 此处是一个回调函数，在HashMap里是个空实现
                 afterNodeAccess(e);
+
+                // 返回旧值
                 return oldValue;
             }
         }
+
+        // 如果程序执行到了这，说明表中存在对入参键的映射，那么需要更新修改次数modCount和表大小，并且在更新表大小之后，需要考虑是否需要重新分配表空间
         ++modCount;
+
+        // 如果表空间大小超过阈值，则重新分配表空间
         if (++size > threshold)
             resize();
+
+        // afterNodeInsertion(evict)方法在HashMap里是空实现，在其他类里可能做了用于其他用途的对应实现
         afterNodeInsertion(evict);
         return null;
     }
@@ -821,11 +862,16 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * Replaces all linked nodes in bin at index for given hash unless
      * table is too small, in which case resizes instead.
+     *
+     * 除非表太小了（在这种情况下，将用重新分配表空间替代），否则就在给定哈希索引的桶处，替换所有的链接结点。
      */
     final void treeifyBin(Node<K,V>[] tab, int hash) {
         int n, index; Node<K,V> e;
+
+        // 如果表不存在或者表长度小于最小树化容量，则重新分配表空间
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
+        // 否则，对哈希值对应位置所在的所有水平结点做树化处理
         else if ((e = tab[index = (n - 1) & hash]) != null) {
             TreeNode<K,V> hd = null, tl = null;
             do {
@@ -973,6 +1019,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @return a set view of the keys contained in this map
      */
     public Set<K> keySet() {
+        // 返回键集，如果键集为空，则新生一个键集类对象实例返回
         Set<K> ks = keySet;
         if (ks == null) {
             ks = new KeySet();
