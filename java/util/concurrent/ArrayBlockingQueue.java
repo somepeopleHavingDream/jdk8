@@ -95,7 +95,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     final Object[] items;
 
     /** items index for next take, poll, peek or remove */
-    // 下一个take、poll、peek、remove的元素下标
+    // 下一个take、poll、peek、remove的元素下标（即队首元素的下标索引）
     int takeIndex;
 
     /** items index for next put, offer, or add */
@@ -199,6 +199,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         // 队列元素数量减一
         count--;
 
+        // 通知各个迭代器，有元素出队
         if (itrs != null)
             itrs.elementDequeued();
 
@@ -433,7 +434,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     }
 
     public E take() throws InterruptedException {
-        // 拿到锁，设置为可中断式加锁
+        // 拿到锁，可中断式地加锁
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
@@ -862,6 +863,8 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
 
         /**
          * Node in a linked list of weak iterator references.
+         *
+         * 在弱迭代器引用链表里的结点。
          */
         private class Node extends WeakReference<Itr> {
             Node next;
@@ -1017,19 +1020,32 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         /**
          * Called whenever the queue becomes empty.
          *
+         * 每当队列为空时调用此方法。
+         *
          * Notifies all active iterators that the queue is empty,
          * clears all weak refs, and unlinks the itrs datastructure.
+         *
+         * 通知所有活跃的迭代器：队列为空，清除所有的弱引用，取消链接itrs的数据结构。
          */
         void queueIsEmpty() {
             // assert lock.getHoldCount() == 1;
             // 断言已拿到锁
+
+            // 对迭代器列表做一些操作
             for (Node p = head; p != null; p = p.next) {
+                // 从迭代器链表中拿到链表结点，即一个迭代器
                 Itr it = p.get();
+
+                // 如果链表结点不为空
                 if (it != null) {
+                    // 清除对迭代器的弱引用
                     p.clear();
+                    // 关闭该迭代器
                     it.shutdown();
                 }
             }
+
+            // 置迭代器链表和迭代器链表的头结点为空
             head = null;
             itrs = null;
         }
@@ -1042,8 +1058,11 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         void elementDequeued() {
             // assert lock.getHoldCount() == 1;
             // 断言已拥有锁，实际上也是的，因为如果没拿到锁，是不会进入到这段代码的
+
+            // 如果队列元素数量为空
             if (count == 0)
                 queueIsEmpty();
+            // 如果队列元素数量不为空，并且队首元素位于数组的首位
             else if (takeIndex == 0)
                 takeIndexWrapped();
         }
@@ -1075,12 +1094,14 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         private E nextItem;
 
         /** Index of nextItem; NONE if none, REMOVED if removed elsewhere */
+        // 下一个元素的索引；如果没有下一个元素，则为NONE，如果元素已在其他地方被移除，则为REMOVED
         private int nextIndex;
 
         /** Last element returned; null if none or not detached. */
         private E lastItem;
 
         /** Index of lastItem, NONE if none, REMOVED if removed elsewhere */
+        // 最后返回元素的索引，如果没有最后返回的元素，则为空，如果元素已在其他地方被移除，则为REMOVED
         private int lastRet;
 
         /** Previous value of takeIndex, or DETACHED when detached */
@@ -1090,15 +1111,19 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         private int prevCycles;
 
         /** Special index value indicating "not available" or "undefined" */
+        // 标志不可用或者未定义的特别的索引值
         private static final int NONE = -1;
 
         /**
          * Special index value indicating "removed elsewhere", that is,
          * removed by some operation other than a call to this.remove().
+         *
+         * 标志已在其他地方删除的特殊索引值，即通过对this.remove()以外的一些操作被移除。
          */
         private static final int REMOVED = -2;
 
         /** Special value for prevTakeIndex indicating "detached mode" */
+        // 用于prevTakeIndex变量的特殊值，标志处于“分离模式”
         private static final int DETACHED = -3;
 
         Itr() {
@@ -1329,9 +1354,14 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
          */
         void shutdown() {
             // assert lock.getHoldCount() == 1;
+            // 断言已拿到锁
+
+            // 标志游标不可用
             cursor = NONE;
+            // 标志下一个元素不可用
             if (nextIndex >= 0)
                 nextIndex = REMOVED;
+            // 标志上一个被返回的元素不可用
             if (lastRet >= 0) {
                 lastRet = REMOVED;
                 lastItem = null;

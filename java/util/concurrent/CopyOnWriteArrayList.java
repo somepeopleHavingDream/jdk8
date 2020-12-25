@@ -166,6 +166,7 @@ public class CopyOnWriteArrayList<E>
      * @throws NullPointerException if the specified array is null
      */
     public CopyOnWriteArrayList(E[] toCopyIn) {
+        // 拷贝一份入参数组，将该拷贝数组设置为当前集合的数组
         setArray(Arrays.copyOf(toCopyIn, toCopyIn.length, Object[].class));
     }
 
@@ -1201,6 +1202,7 @@ public class CopyOnWriteArrayList<E>
         private int cursor;
 
         private COWIterator(Object[] elements, int initialCursor) {
+            // 设置游标和快照数组
             cursor = initialCursor;
             snapshot = elements;
         }
