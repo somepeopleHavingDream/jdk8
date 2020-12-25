@@ -383,6 +383,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private static final int CAPACITY   = (1 << COUNT_BITS) - 1;
 
     // runState is stored in the high-order bits
+    // 运行状态被存储在高位里
     private static final int RUNNING    = -1 << COUNT_BITS;
     private static final int SHUTDOWN   =  0 << COUNT_BITS;
     private static final int STOP       =  1 << COUNT_BITS;
@@ -546,6 +547,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
     /**
      * The default rejected execution handler
+     *
+     * 默认拒绝执行处理者
      */
     private static final RejectedExecutionHandler defaultHandler =
         new AbortPolicy();
@@ -574,6 +577,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         new RuntimePermission("modifyThread");
 
     /* The context to be used when executing the finalizer, or null. */
+    // 当执行finalizer时将被使用的上下文，或者为空
     private final AccessControlContext acc;
 
     /**
@@ -1307,6 +1311,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                               BlockingQueue<Runnable> workQueue,
                               ThreadFactory threadFactory,
                               RejectedExecutionHandler handler) {
+        // 校验参数
         if (corePoolSize < 0 ||
             maximumPoolSize <= 0 ||
             maximumPoolSize < corePoolSize ||
@@ -1314,24 +1319,40 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             throw new IllegalArgumentException();
         if (workQueue == null || threadFactory == null || handler == null)
             throw new NullPointerException();
+
+        // 设置相关成员变量
         this.acc = System.getSecurityManager() == null ?
                 null :
                 AccessController.getContext();
+        // 核心线程数
         this.corePoolSize = corePoolSize;
+        // 最大线程数
         this.maximumPoolSize = maximumPoolSize;
+        // 工作队列（也称为任务队列）
         this.workQueue = workQueue;
+        // 超过核心线程数的线程的空闲存活时间（单位为毫微秒）
         this.keepAliveTime = unit.toNanos(keepAliveTime);
+        // 线程工厂，用于创建线程
         this.threadFactory = threadFactory;
+        // 当任务数量超过最大线程数时，线程池将执行的拒绝策略，此handler为拒绝策略执行者
         this.handler = handler;
+
+        // 从此方法可以看出，此类在构造方法里并未实际地创建线程，只是先存储了一些用于创建线程池的数据
     }
 
     /**
      * Executes the given task sometime in the future.  The task
      * may execute in a new thread or in an existing pooled thread.
      *
+     * 在未来的某个时间执行给定的任务。
+     * 任务可能在一个新线程里或者在一个存在的池内线程里执行。
+     *
      * If the task cannot be submitted for execution, either because this
      * executor has been shutdown or because its capacity has been reached,
      * the task is handled by the current {@code RejectedExecutionHandler}.
+     *
+     * 如果任务不能被提交执行，要么是因为此执行器已经关闭，要么是因为执行器的容量已经被达到，
+     * 那么任务将由当前拒绝执行处理器处理。
      *
      * @param command the task to execute
      * @throws RejectedExecutionException at discretion of
@@ -1340,16 +1361,22 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws NullPointerException if {@code command} is null
      */
     public void execute(Runnable command) {
+        // 如果执行任务为空，则抛出空指针异常
         if (command == null)
             throw new NullPointerException();
         /*
          * Proceed in 3 steps:
+         *
+         * 在３个步骤里处理：
          *
          * 1. If fewer than corePoolSize threads are running, try to
          * start a new thread with the given command as its first
          * task.  The call to addWorker atomically checks runState and
          * workerCount, and so prevents false alarms that would add
          * threads when it shouldn't, by returning false.
+         *
+         * 1. 如果当前运行的线程数少于核心线程数，尝试开启一个新线程，并将该给定任务作为该新线程的第一个任务。
+         * 对添加工作者方法的调用将自动地检查运行状态和工作者计数，并且在不应添加线程时，通过返回假，阻止添加线程的假警告。
          *
          * 2. If a task can be successfully queued, then we still need
          * to double-check whether we should have added a thread
@@ -1358,9 +1385,16 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * recheck state and if necessary roll back the enqueuing if
          * stopped, or start a new thread if there are none.
          *
+         * 2. 如果任务能被成功地排队，我们仍然需要二次检查是否我们应该添加一个线程（因为有自上次检查之后存在线程死亡的情况），
+         * 或者当条目进入到此方法后，线程池已经停止。
+         * 所以我们得重新检查状态，在线程池停止的情况下回滚任务入队，或者是开启一个新线程（因为有自上次检查之后存在线程死亡的情况）。
+         *
          * 3. If we cannot queue task, then we try to add a new
          * thread.  If it fails, we know we are shut down or saturated
          * and so reject the task.
+         *
+         * 3. 如果我们不能入队任务，那么我们将尝试添加一个新线程。
+         * 如果添加新线程失败，则我们知道线程池处于关闭状态或者线程池已经饱和，那么我们需要拒绝任务。
          */
         int c = ctl.get();
         if (workerCountOf(c) < corePoolSize) {
@@ -2047,6 +2081,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     public static class AbortPolicy implements RejectedExecutionHandler {
         /**
          * Creates an {@code AbortPolicy}.
+         *
+         * 创建一个拒绝策略
          */
         public AbortPolicy() { }
 
