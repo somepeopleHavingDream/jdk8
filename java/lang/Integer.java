@@ -1318,6 +1318,8 @@ public final class Integer extends Number implements Comparable<Integer> {
      * The number of bits used to represent an {@code int} value in two's
      * complement binary form.
      *
+     * 用于以二进制补码形式来表示整型值的二进制位数
+     *
      * @since 1.5
      */
     @Native public static final int SIZE = 32;
