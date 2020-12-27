@@ -850,6 +850,8 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
 
     /**
      * Creates a {@code SynchronousQueue} with nonfair access policy.
+     *
+     * 创建一个非公平访问策略的同步队列
      */
     public SynchronousQueue() {
         this(false);
@@ -862,6 +864,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
      *        access; otherwise the order is unspecified.
      */
     public SynchronousQueue(boolean fair) {
+        // 根据是否公平，实例化不同的传送实例
         transferer = fair ? new TransferQueue<E>() : new TransferStack<E>();
     }
 
@@ -909,7 +912,9 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException if the specified element is null
      */
     public boolean offer(E e) {
+        // 如果入参为空，则抛出空指针异常
         if (e == null) throw new NullPointerException();
+
         return transferer.transfer(e, true, 0) != null;
     }
 

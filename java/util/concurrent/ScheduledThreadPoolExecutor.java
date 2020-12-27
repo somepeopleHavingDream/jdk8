@@ -195,6 +195,7 @@ public class ScheduledThreadPoolExecutor
         private final long period;
 
         /** The actual task to be re-enqueued by reExecutePeriodic */
+        // 将要被reExecutePeriodic重复入队的实际任务
         RunnableScheduledFuture<V> outerTask = this;
 
         /**
@@ -214,6 +215,8 @@ public class ScheduledThreadPoolExecutor
 
         /**
          * Creates a periodic action with given nano time and period.
+         *
+         * 用给定的纳米时间和周期，创建周期性动作。
          */
         ScheduledFutureTask(Runnable r, V result, long ns, long period) {
             super(r, result);
@@ -322,9 +325,11 @@ public class ScheduledThreadPoolExecutor
      * @param task the task
      */
     private void delayedExecute(RunnableScheduledFuture<?> task) {
+        // 如果线程池关闭，则拒绝执行任务
         if (isShutdown())
             reject(task);
         else {
+            // 否则，往队列中添加任务
             super.getQueue().add(task);
             if (isShutdown() &&
                 !canRunInCurrentRunState(task.isPeriodic()) &&
@@ -427,6 +432,7 @@ public class ScheduledThreadPoolExecutor
      * @throws IllegalArgumentException if {@code corePoolSize < 0}
      */
     public ScheduledThreadPoolExecutor(int corePoolSize) {
+        // 注意：阻塞队列为DelayedWorkQueue
         super(corePoolSize, Integer.MAX_VALUE, 0, NANOSECONDS,
               new DelayedWorkQueue());
     }
@@ -559,18 +565,27 @@ public class ScheduledThreadPoolExecutor
                                                   long initialDelay,
                                                   long period,
                                                   TimeUnit unit) {
+        // 校验入参
         if (command == null || unit == null)
             throw new NullPointerException();
         if (period <= 0)
             throw new IllegalArgumentException();
+
+        // 实例化计划的未来任务
         ScheduledFutureTask<Void> sft =
             new ScheduledFutureTask<Void>(command,
                                           null,
                                           triggerTime(initialDelay, unit),
                                           unit.toNanos(period));
+        // 装饰任务，本类中的decorate方法会将sft以RunnableScheduledFuture类型返回
         RunnableScheduledFuture<Void> t = decorateTask(command, sft);
+        // 设置实际的运行任务
         sft.outerTask = t;
+
+        // 延迟执行（具体细节此处不深究，有机会再看）
         delayedExecute(t);
+
+        // 返回future
         return t;
     }
 

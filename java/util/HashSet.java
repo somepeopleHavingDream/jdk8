@@ -96,11 +96,15 @@ public class HashSet<E>
     private transient HashMap<E,Object> map;
 
     // Dummy value to associate with an Object in the backing Map
+    // 与后备哈希表里的对象相联系的虚拟值
     private static final Object PRESENT = new Object();
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
      * default initial capacity (16) and load factor (0.75).
+     *
+     * 构建一个新的、空的集合；
+     * 后备的HashMap实例具有默认的初始容量（16）和加载因子（0.75）
      */
     public HashSet() {
         map = new HashMap<>();
@@ -217,6 +221,8 @@ public class HashSet<E>
      * element
      */
     public boolean add(E e) {
+        // 可以看出HashSet类的add方法的实现，底层实际上是调用了HashMap的方法。
+        // HashSet里的其他方法大概也和add方法一样，是通过调用HashMap方法而实现的。
         return map.put(e, PRESENT)==null;
     }
 
