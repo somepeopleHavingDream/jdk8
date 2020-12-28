@@ -796,6 +796,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
         void interruptIfStarted() {
             Thread t;
+
+            // 如果满足以下条件，则打断此工作者线程
             if (getState() >= 0 && (t = thread) != null && !t.isInterrupted()) {
                 try {
                     t.interrupt();
@@ -818,7 +820,10 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     private void advanceRunState(int targetState) {
         for (;;) {
+            // 获得当前线程池状态
             int c = ctl.get();
+
+            // 如果当前线程池状态值大于等于目标状态值，或者cas改变当前线程池状态成功，则退出循环，否则此方法一直循环下去
             if (runStateAtLeast(c, targetState) ||
                 ctl.compareAndSet(c, ctlOf(targetState, workerCountOf(c))))
                 break;
@@ -897,12 +902,16 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * specially.
      */
     private void checkShutdownAccess() {
+        // 获得安全管理器
         SecurityManager security = System.getSecurityManager();
+
+        // 如果安全管理器不为空
         if (security != null) {
             security.checkPermission(shutdownPerm);
             final ReentrantLock mainLock = this.mainLock;
             mainLock.lock();
             try {
+                // 这里似乎是用安全管理器检查每个工作者的线程
                 for (Worker w : workers)
                     security.checkAccess(w.thread);
             } finally {
@@ -916,12 +925,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * (in which case some threads may remain uninterrupted).
      */
     private void interruptWorkers() {
+        // 拿到主锁，并上锁
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
+            // 中断所有启动了的工作者
             for (Worker w : workers)
                 w.interruptIfStarted();
         } finally {
+            // 解锁主锁
             mainLock.unlock();
         }
     }
@@ -932,6 +944,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * termination or configuration changes. Ignores
      * SecurityExceptions (in which case some threads may remain
      * uninterrupted).
+     *
+     * 中断可能正在等待任务的线程（如没有被锁定），以便他们能检查终止或配置的改变。
+     * 忽略安全异常（在这种情况下，一些线程可能保持不被中断）
      *
      * @param onlyOne If true, interrupt at most one worker. This is
      * called only from tryTerminate when termination is otherwise
@@ -955,7 +970,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 // 获得当前工作者的线程
                 Thread t = w.thread;
 
-                // 如果当前工作者线程未被中断，并且工作者获锁成功
+                // 如果当前工作者线程未被中断，并且工作者获锁成功（即，当前线程可以独占此工作者，也说明此工作者之前未被其他线程独占，即此工作者之前并未处理任务）
                 if (!t.isInterrupted() && w.tryLock()) {
                     try {
                         // 中断当前工作者线程
@@ -982,6 +997,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * remember what the boolean argument means.
      */
     private void interruptIdleWorkers() {
+        // onlyOne为假，说明中断所有的空闲工作者
         interruptIdleWorkers(false);
     }
 
@@ -1027,15 +1043,22 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * elements, it deletes them one by one.
      */
     private List<Runnable> drainQueue() {
+        // 将工作队列workQueue里的任务排出到taskList中
         BlockingQueue<Runnable> q = workQueue;
         ArrayList<Runnable> taskList = new ArrayList<Runnable>();
         q.drainTo(taskList);
+
+        // 对非空的阻塞工作队列做处理
         if (!q.isEmpty()) {
+            // 得到一份该阻塞队列转换为Runnable类型的数组
             for (Runnable r : q.toArray(new Runnable[0])) {
+                // 任务队列移除该任务，并将该任务添加到未完成任务集中
                 if (q.remove(r))
                     taskList.add(r);
             }
         }
+
+        // 返回未完成任务集
         return taskList;
     }
 
@@ -1729,16 +1752,25 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws SecurityException {@inheritDoc}
      */
     public void shutdown() {
+        // 获得主锁，并上锁
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
+            // 检查关闭访问
             checkShutdownAccess();
+            // 提前设置运行状态
             advanceRunState(SHUTDOWN);
+            // 中断空闲的工作者
             interruptIdleWorkers();
+
+            // 用于ScheduledThreadPoolExecutor的钩子方法
             onShutdown(); // hook for ScheduledThreadPoolExecutor
         } finally {
+            // 解锁主锁
             mainLock.unlock();
         }
+
+        // 尝试终止线程池
         tryTerminate();
     }
 
@@ -1761,16 +1793,25 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     public List<Runnable> shutdownNow() {
         List<Runnable> tasks;
+
+        // 拿到主锁，并上锁
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
+            // 检查关闭访问
             checkShutdownAccess();
+            // 提前设置线程运行状态
             advanceRunState(STOP);
+            // 中断所有工作者
             interruptWorkers();
+            // 将工作队列的未被处理的任务派出
             tasks = drainQueue();
         } finally {
+            // 解锁主锁
             mainLock.unlock();
         }
+
+        // 尝试终止线程池，返回未完成任务集
         tryTerminate();
         return tasks;
     }
@@ -1801,18 +1842,26 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
     public boolean awaitTermination(long timeout, TimeUnit unit)
         throws InterruptedException {
+        // 将时间转换为纳米单位
         long nanos = unit.toNanos(timeout);
+
+        // 拿到主锁，并上锁
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
             for (;;) {
+                // 如果线程池已经终止，则返回真
                 if (runStateAtLeast(ctl.get(), TERMINATED))
                     return true;
+                // 如果线程池仍有任务在处理，并且入参等待时间是负数，则返回假
                 if (nanos <= 0)
                     return false;
+
+                // 如果线程池仍有任务在处理，并且调用可以等待一段时间，则等待nanos纳秒
                 nanos = termination.awaitNanos(nanos);
             }
         } finally {
+            // 解锁主锁
             mainLock.unlock();
         }
     }
