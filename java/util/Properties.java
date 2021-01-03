@@ -129,12 +129,16 @@ class Properties extends Hashtable<Object,Object> {
      * A property list that contains default values for any keys not
      * found in this property list.
      *
+     * 包含在此属性列表里对于任何键都没找到的默认值的属性列表（其实就是一个Properties类对象）
+     *
      * @serial
      */
     protected Properties defaults;
 
     /**
      * Creates an empty property list with no default values.
+     *
+     * 创建一个没有默认值的空属性列表
      */
     public Properties() {
         this(null);
@@ -142,6 +146,8 @@ class Properties extends Hashtable<Object,Object> {
 
     /**
      * Creates an empty property list with the specified defaults.
+     *
+     * 创建一个指定默认值的空属性列表
      *
      * @param   defaults   the defaults.
      */
