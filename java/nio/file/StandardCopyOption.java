@@ -34,6 +34,8 @@ package java.nio.file;
 public enum StandardCopyOption implements CopyOption {
     /**
      * Replace an existing file if it exists.
+     *
+     * 替换存在的文件，如果该文件存在。
      */
     REPLACE_EXISTING,
     /**

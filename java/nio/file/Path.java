@@ -101,6 +101,8 @@ public interface Path
     /**
      * Returns the file system that created this object.
      *
+     * 返回创建此对象的文件系统
+     *
      * @return  the file system that created this object
      */
     FileSystem getFileSystem();

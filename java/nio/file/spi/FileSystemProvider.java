@@ -418,6 +418,7 @@ public abstract class FileSystemProvider {
     public OutputStream newOutputStream(Path path, OpenOption... options)
         throws IOException
     {
+        // 设置一些OpenOption
         int len = options.length;
         Set<OpenOption> opts = new HashSet<OpenOption>(len + 3);
         if (len == 0) {
@@ -431,6 +432,8 @@ public abstract class FileSystemProvider {
             }
         }
         opts.add(StandardOpenOption.WRITE);
+
+        // 底层调用了Channels类的newOutputStream的方法
         return Channels.newOutputStream(newByteChannel(path, opts));
     }
 
@@ -736,6 +739,7 @@ public abstract class FileSystemProvider {
      */
     public boolean deleteIfExists(Path path) throws IOException {
         try {
+            // 删除该路径
             delete(path);
             return true;
         } catch (NoSuchFileException ignore) {

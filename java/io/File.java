@@ -2196,6 +2196,7 @@ public class File
     private static final long serialVersionUID = 301077366599181567L;
 
     // -- Integration with java.nio.file --
+    // 与java.nio.file的集成
 
     private volatile transient Path filePath;
 
@@ -2227,15 +2228,23 @@ public class File
      */
     public Path toPath() {
         Path result = filePath;
+
+        // 如果路径为空，尝试获取路径
         if (result == null) {
+            // 上锁
             synchronized (this) {
+                // 取得最新一次的路径值
                 result = filePath;
+                // 如果最新的路径值仍然为空，说明没有其他线程调用toPath方法，则尝试获取路径
                 if (result == null) {
+                    // 获得默认的文件系统，获得路径实例，并设置该文件的路径引用
                     result = FileSystems.getDefault().getPath(path);
                     filePath = result;
                 }
             }
         }
+
+        // 返回的路径必不为空
         return result;
     }
 }

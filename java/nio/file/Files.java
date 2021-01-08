@@ -88,12 +88,19 @@ import java.util.stream.StreamSupport;
  */
 
 public final class Files {
+
+    /**
+     * 常量类，且构造方法私有
+     */
     private Files() { }
 
     /**
      * Returns the {@code FileSystemProvider} to delegate to.
+     *
+     * 返回要委托给的FileSystemProvider类实例
      */
     private static FileSystemProvider provider(Path path) {
+        // 通过路径，获得文件系统，获得文件系统的提供者
         return path.getFileSystem().provider();
     }
 
@@ -213,6 +220,7 @@ public final class Files {
     public static OutputStream newOutputStream(Path path, OpenOption... options)
         throws IOException
     {
+        // 通过文件路径获得文件系统实例，再实例化出一个新的输出流
         return provider(path).newOutputStream(path, options);
     }
 
@@ -1162,6 +1170,7 @@ public final class Files {
      *          is invoked to check delete access to the file.
      */
     public static boolean deleteIfExists(Path path) throws IOException {
+        // 通过文件路径，获得文件系统提供者，进而删除该文件路径
         return provider(path).deleteIfExists(path);
     }
 
@@ -2749,6 +2758,7 @@ public final class Files {
     // -- Utility methods for simple usages --
 
     // buffer size used for reading and writing
+    // 用于读写的缓冲区大小，8k
     private static final int BUFFER_SIZE = 8192;
 
     /**
@@ -2898,6 +2908,8 @@ public final class Files {
 
     /**
      * Reads all bytes from an input stream and writes them to an output stream.
+     *
+     * 将一个输入流中的字节读出，并且将所有的字节写到一个输出流中
      */
     private static long copy(InputStream source, OutputStream sink)
         throws IOException
@@ -2909,6 +2921,8 @@ public final class Files {
             sink.write(buf, 0, n);
             nread += n;
         }
+
+        // 返回读了多少个字节
         return nread;
     }
 
@@ -2981,14 +2995,19 @@ public final class Files {
         throws IOException
     {
         // ensure not null before opening file
+        // 在打开文件前，确保文件不为空
         Objects.requireNonNull(in);
 
         // check for REPLACE_EXISTING
+        // 检查REPLACE_EXISTING
         boolean replaceExisting = false;
         for (CopyOption opt: options) {
+            // 如果可以替换存在文件，则将replaceExisting标记为真
             if (opt == StandardCopyOption.REPLACE_EXISTING) {
                 replaceExisting = true;
             } else {
+                // 如果不可以替换存在文件，则无论如何都会抛出一个异常
+                // 也就是说，要么方法中第三个可变形参参数没有，要么必须带一个StandardCopyOption类型参数
                 if (opt == null) {
                     throw new NullPointerException("options contains 'null'");
                 }  else {
@@ -2998,9 +3017,11 @@ public final class Files {
         }
 
         // attempt to delete an existing file
+        // 尝试去删除一个存在的文件
         SecurityException se = null;
         if (replaceExisting) {
             try {
+                // 调用如果存在则删除的方法，删除失败则会抛出异常
                 deleteIfExists(target);
             } catch (SecurityException x) {
                 se = x;
@@ -3011,18 +3032,26 @@ public final class Files {
         // FileAlreadyExistsException then it may be because the security
         // manager prevented us from deleting the file, in which case we just
         // throw the SecurityException.
+        /*
+            尝试去创建目标文件。
+            如果因为文件已经存在异常而失败，则安全管理器会阻止我们删除文件，在这种情况下我们只需要抛出安全异常。
+         */
+        // 代码执行到这，说明删除目标文件成功
         OutputStream ostream;
         try {
+            // 底层调用了Channels类的相关方法，得到了一个输出流
             ostream = newOutputStream(target, StandardOpenOption.CREATE_NEW,
                                               StandardOpenOption.WRITE);
         } catch (FileAlreadyExistsException x) {
             if (se != null)
                 throw se;
             // someone else won the race and created the file
+            // 可能某些线程赢得了竞争，因此先创建了文件，那么抛出文件已经创建异常
             throw x;
         }
 
         // do the copy
+        // 做复制
         try (OutputStream out = ostream) {
             return copy(in, out);
         }

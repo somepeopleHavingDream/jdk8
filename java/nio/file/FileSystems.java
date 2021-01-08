@@ -90,8 +90,13 @@ public final class FileSystems {
         static final FileSystem defaultFileSystem = defaultFileSystem();
 
         // returns default file system
+
+        /**
+         * 返回默认文件系统
+         */
         private static FileSystem defaultFileSystem() {
             // load default provider
+            // 加载默认提供者
             FileSystemProvider provider = AccessController
                 .doPrivileged(new PrivilegedAction<FileSystemProvider>() {
                     public FileSystemProvider run() {
@@ -100,6 +105,7 @@ public final class FileSystems {
                 });
 
             // return file system
+            // 返回文件系统
             return provider.getFileSystem(URI.create("file:///"));
         }
 
@@ -173,6 +179,7 @@ public final class FileSystems {
      * @return  the default file system
      */
     public static FileSystem getDefault() {
+        // 获得默认的文件系统对象
         return DefaultFileSystemHolder.defaultFileSystem;
     }
 

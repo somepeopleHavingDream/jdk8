@@ -100,9 +100,12 @@ class ByteArrayInputStream extends InputStream {
      *
      * @param   buf   the input buffer.
      */
-    public ByteArrayInputStream(byte buf[]) {
+    public ByteArrayInputStream(byte[] buf) {
+        // 设置缓冲区
         this.buf = buf;
+        // 设置当前游标位置
         this.pos = 0;
+        // 设置缓冲区个数
         this.count = buf.length;
     }
 

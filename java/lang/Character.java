@@ -4949,8 +4949,11 @@ class Character implements java.io.Serializable, Comparable<Character> {
     }
 
     // throws ArrayIndexOutOfBoundsException if index out of bounds
+    // 如果索引越界，则抛出数组索引越界异常
     static int codePointAtImpl(char[] a, int index, int limit) {
+        // 保存当前索引的元素字符
         char c1 = a[index];
+
         if (isHighSurrogate(c1) && ++index < limit) {
             char c2 = a[index];
             if (isLowSurrogate(c2)) {
