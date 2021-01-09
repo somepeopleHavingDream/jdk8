@@ -26,6 +26,7 @@
 package java.io;
 
 import java.security.AccessController;
+
 import sun.security.action.GetPropertyAction;
 
 
@@ -37,11 +38,11 @@ class UnixFileSystem extends FileSystem {
 
     public UnixFileSystem() {
         slash = AccessController.doPrivileged(
-            new GetPropertyAction("file.separator")).charAt(0);
+                new GetPropertyAction("file.separator")).charAt(0);
         colon = AccessController.doPrivileged(
-            new GetPropertyAction("path.separator")).charAt(0);
+                new GetPropertyAction("path.separator")).charAt(0);
         javaHome = AccessController.doPrivileged(
-            new GetPropertyAction("java.home"));
+                new GetPropertyAction("java.home"));
     }
 
 
@@ -80,6 +81,12 @@ class UnixFileSystem extends FileSystem {
     /* Check that the given pathname is normal.  If not, invoke the real
        normalizer on the part of the pathname that requires normalization.
        This way we iterate through the whole pathname string only once. */
+
+    /**
+     * 检查给定的路径名是否正常。
+     * 如果路径名不正常，则在需要标准化的路径名部分调用真正的标准化器。
+     * 我们只迭代整个路径名字符串一次。
+     */
     public String normalize(String pathname) {
         int n = pathname.length();
         char prevChar = 0;
@@ -172,7 +179,7 @@ class UnixFileSystem extends FileSystem {
                     res = canonicalize0(path);
                     cache.put(path, res);
                     if (useCanonPrefixCache &&
-                        dir != null && dir.startsWith(javaHome)) {
+                            dir != null && dir.startsWith(javaHome)) {
                         resDir = parentOrNull(res);
                         // Note that we don't allow a resolved symlink
                         // to elsewhere in java.home to pollute the
@@ -190,7 +197,9 @@ class UnixFileSystem extends FileSystem {
             return res;
         }
     }
+
     private native String canonicalize0(String path) throws IOException;
+
     // Best-effort attempt to get parent of this path; used for
     // optimization of filename canonicalization. This must return null for
     // any cases where the code in canonicalize_md.c would throw an
@@ -218,8 +227,8 @@ class UnixFileSystem extends FileSystem {
                     return null;
                 }
                 if (idx == 0 ||
-                    idx >= last - 1 ||
-                    path.charAt(idx - 1) == sep) {
+                        idx >= last - 1 ||
+                        path.charAt(idx - 1) == sep) {
                     // Punt on pathnames containing adjacent slashes
                     // toward the end
                     return null;
@@ -246,14 +255,18 @@ class UnixFileSystem extends FileSystem {
     }
 
     public native boolean checkAccess(File f, int access);
+
     public native long getLastModifiedTime(File f);
+
     public native long getLength(File f);
+
     public native boolean setPermission(File f, int access, boolean enable, boolean owneronly);
 
     /* -- File operations -- */
 
     public native boolean createFileExclusively(String path)
-        throws IOException;
+            throws IOException;
+
     public boolean delete(File f) {
         // Keep canonicalization caches in sync after file deletion
         // and renaming operations. Could be more clever than this
@@ -264,9 +277,13 @@ class UnixFileSystem extends FileSystem {
         javaHomePrefixCache.clear();
         return delete0(f);
     }
+
     private native boolean delete0(File f);
+
     public native String[] list(File f);
+
     public native boolean createDirectory(File f);
+
     public boolean rename(File f1, File f2) {
         // Keep canonicalization caches in sync after file deletion
         // and renaming operations. Could be more clever than this
@@ -277,8 +294,11 @@ class UnixFileSystem extends FileSystem {
         javaHomePrefixCache.clear();
         return rename0(f1, f2);
     }
+
     private native boolean rename0(File f1, File f2);
+
     public native boolean setLastModifiedTime(File f, long time);
+
     public native boolean setReadOnly(File f);
 
 
@@ -290,7 +310,7 @@ class UnixFileSystem extends FileSystem {
             if (security != null) {
                 security.checkRead("/");
             }
-            return new File[] { new File("/") };
+            return new File[]{new File("/")};
         } catch (SecurityException x) {
             return new File[0];
         }

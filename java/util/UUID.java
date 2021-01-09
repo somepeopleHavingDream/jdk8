@@ -91,8 +91,15 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
     /*
      * The random number generator used by this class to create random
      * based UUIDs. In a holder class to defer initialization until needed.
+     *
+     * 此随机数生成器被此类使用以创造基于UUIDs的随机。
+     * 在拥有者类里推迟初始化，直到初始化被需要时。
      */
     private static class Holder {
+
+        /**
+         * 此静态成员变量会在类实例化时被实例化
+         */
         static final SecureRandom numberGenerator = new SecureRandom();
     }
 
@@ -100,6 +107,8 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
 
     /*
      * Private constructor which uses a byte array to construct the new UUID.
+     *
+     * 使用字节数组以构建新的UUID的私有构造器
      */
     private UUID(byte[] data) {
         long msb = 0;
@@ -133,18 +142,27 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
     /**
      * Static factory to retrieve a type 4 (pseudo randomly generated) UUID.
      *
+     * 静态工厂，以取得类型4(伪随机生成）的UUID。
+     *
      * The {@code UUID} is generated using a cryptographically strong pseudo
      * random number generator.
+     *
+     * 通过使用密码学强伪随机数字生成器，生成UUID。
      *
      * @return  A randomly generated {@code UUID}
      */
     public static UUID randomUUID() {
+        // 拿到数字生成器
         SecureRandom ng = Holder.numberGenerator;
 
         byte[] randomBytes = new byte[16];
         ng.nextBytes(randomBytes);
+
+        // 清除版本号，设置版本号
         randomBytes[6]  &= 0x0f;  /* clear version        */
         randomBytes[6]  |= 0x40;  /* set to version 4     */
+
+        // 清除变体、设置IETF变体
         randomBytes[8]  &= 0x3f;  /* clear variant        */
         randomBytes[8]  |= 0x80;  /* set to IETF variant  */
         return new UUID(randomBytes);

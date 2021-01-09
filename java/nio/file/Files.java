@@ -3128,18 +3128,23 @@ public final class Files {
         byte[] buf = new byte[capacity];
         int nread = 0;
         int n;
+
+        // 循环操作
         for (;;) {
             // read to EOF which may read more or less than initialSize (eg: file
             // is truncated while we are reading)
+            // 读到文件结尾，其文件读取结果可能多于或少于初始大小（比如：当我们读的时候，文件被截断）
             while ((n = source.read(buf, nread, capacity - nread)) > 0)
                 nread += n;
 
             // if last call to source.read() returned -1, we are done
             // otherwise, try to read one more byte; if that failed we're done too
+            // 如果对source.reader()最后的调用返回-1，则做完了，否则，尝试读更多的字节；如果失败，则我们也做完了。
             if (n < 0 || (n = source.read()) < 0)
                 break;
 
             // one more byte was read; need to allocate a larger buffer
+            // 更多的字节被读取；需要去分配一个更大缓冲区
             if (capacity <= MAX_BUFFER_SIZE - capacity) {
                 capacity = Math.max(capacity << 1, BUFFER_SIZE);
             } else {
@@ -3178,12 +3183,17 @@ public final class Files {
      *          method is invoked to check read access to the file.
      */
     public static byte[] readAllBytes(Path path) throws IOException {
+        // 根据路径，生成新的字节通道
         try (SeekableByteChannel sbc = Files.newByteChannel(path);
+             // 通过通道，生成输入流
              InputStream in = Channels.newInputStream(sbc)) {
+
+            // 获得通道大小，如果大小超过最大缓冲区大小，则抛出内存溢出错误
             long size = sbc.size();
             if (size > (long)MAX_BUFFER_SIZE)
                 throw new OutOfMemoryError("Required array size too large");
 
+            // 读取字节
             return read(in, (int)size);
         }
     }

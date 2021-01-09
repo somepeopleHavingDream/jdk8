@@ -81,6 +81,7 @@ public final class Paths {
      * @see FileSystem#getPath
      */
     public static Path get(String first, String... more) {
+        // 获得默认文件系统，在获得路径对象
         return FileSystems.getDefault().getPath(first, more);
     }
 

@@ -152,6 +152,8 @@ public class File
 
     /**
      * The FileSystem object representing the platform's local file system.
+     *
+     * 代表平台本地文件系统的文件系统对象
      */
     private static final FileSystem fs = DefaultFileSystem.getFileSystem();
 
@@ -273,10 +275,14 @@ public class File
      *          If the <code>pathname</code> argument is <code>null</code>
      */
     public File(String pathname) {
+        // 如果路径名为空，则抛出空指针异常
         if (pathname == null) {
             throw new NullPointerException();
         }
+
+        // 得到标准化路径
         this.path = fs.normalize(pathname);
+        // 得到路径前缀长度
         this.prefixLength = fs.prefixLength(this.path);
     }
 

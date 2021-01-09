@@ -82,6 +82,9 @@ class Random implements java.io.Serializable {
      * The internal state associated with this pseudorandom number generator.
      * (The specs for the methods in this class describe the ongoing
      * computation of this value.)
+     *
+     * 和伪随机数字生成器相关联的内部状态。
+     * （此类中的方法规范描述了此值不断地计算。）
      */
     private final AtomicLong seed;
 
@@ -133,10 +136,15 @@ class Random implements java.io.Serializable {
      * @see   #setSeed(long)
      */
     public Random(long seed) {
+        // 如果当前实例类型是Random
         if (getClass() == Random.class)
+            // 设置种子
             this.seed = new AtomicLong(initialScramble(seed));
         else {
+            // 如果当前实例类型不是Random，说明当前实例的类型是Random的子类
             // subclass might have overriden setSeed
+            // 子类可能已经覆写了setSeed方法
+            // 总之就是设置种子
             this.seed = new AtomicLong();
             setSeed(seed);
         }

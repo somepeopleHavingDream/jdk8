@@ -158,6 +158,8 @@ public class SecureRandom extends java.util.Random {
          * This call to our superclass constructor will result in a call
          * to our own {@code setSeed} method, which will return
          * immediately when it is passed zero.
+         *
+         * 对我们父类构造器的调用，将导致对我们自己的setSeed方法的调用，而该方法在传递0时，将立即返回。
          */
         super(0);
         getDefaultPRNG(false, null);
