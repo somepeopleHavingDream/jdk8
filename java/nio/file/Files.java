@@ -3134,17 +3134,20 @@ public final class Files {
             // read to EOF which may read more or less than initialSize (eg: file
             // is truncated while we are reading)
             // 读到文件结尾，其文件读取结果可能多于或少于初始大小（比如：当我们读的时候，文件被截断）
+            // 将source输入流中的字节，全部读到buf中
             while ((n = source.read(buf, nread, capacity - nread)) > 0)
                 nread += n;
 
             // if last call to source.read() returned -1, we are done
             // otherwise, try to read one more byte; if that failed we're done too
-            // 如果对source.reader()最后的调用返回-1，则做完了，否则，尝试读更多的字节；如果失败，则我们也做完了。
+            // 如果对source.read()最后的调用返回-1，则做完了，否则，尝试读更多的字节；如果失败，则我们也做完了。
             if (n < 0 || (n = source.read()) < 0)
                 break;
 
             // one more byte was read; need to allocate a larger buffer
             // 更多的字节被读取；需要去分配一个更大缓冲区
+            // n有可能为0，因为数组容量不足以容纳输入流内的全部字节
+            // 计算新的缓冲区容量
             if (capacity <= MAX_BUFFER_SIZE - capacity) {
                 capacity = Math.max(capacity << 1, BUFFER_SIZE);
             } else {
@@ -3155,6 +3158,8 @@ public final class Files {
             buf = Arrays.copyOf(buf, capacity);
             buf[nread++] = (byte)n;
         }
+
+        // 代码到这，说明已经到达了输入流的尾端，对返回缓冲区做截断操作，只返回数据部分
         return (capacity == nread) ? buf : Arrays.copyOf(buf, nread);
     }
 

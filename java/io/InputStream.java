@@ -56,6 +56,11 @@ public abstract class InputStream implements Closeable {
      * blocks until input data is available, the end of the stream is detected,
      * or an exception is thrown.
      *
+     * 从输入流中读取数据的下一个字节。
+     * 此值字节返回0到255范围内的整型值。
+     * 如果因为已经到达了流的尾端，没有可使用的字节了，则返回值-1.
+     * 此方法将阻塞，直至输入数据可用，或者侦测到流的尾端，或者有异常被抛出。
+     *
      * <p> A subclass must provide an implementation of this method.
      *
      * @return     the next byte of data, or <code>-1</code> if the end of the
@@ -159,20 +164,29 @@ public abstract class InputStream implements Closeable {
      * @see        java.io.InputStream#read()
      */
     public int read(byte b[], int off, int len) throws IOException {
+        // 如果入参字节数组为空，则抛出空指针异常
         if (b == null) {
             throw new NullPointerException();
         } else if (off < 0 || len < 0 || len > b.length - off) {
+            // 如果起始偏移量和长度不合规定，则抛出数组越界异常
             throw new IndexOutOfBoundsException();
         } else if (len == 0) {
+            // 如果长度为0，则返回读了0个字节
             return 0;
         }
 
+        // 调用底层native方法，读取字节
+        // 先读取第一个字节，如果返回值为-1，说明文件读取完毕，则返回-1
         int c = read();
         if (c == -1) {
             return -1;
         }
+
+        // 如果read的返回值不是-1，说明当前输出流存在需要读取出的字节
+        // 将上面读取出来的第一个字节的值，赋给数组的偏移量处
         b[off] = (byte)c;
 
+        // 循环读取字节，直至侦测到了流的末尾，或者抛出了输入输出异常
         int i = 1;
         try {
             for (; i < len ; i++) {
@@ -184,6 +198,8 @@ public abstract class InputStream implements Closeable {
             }
         } catch (IOException ee) {
         }
+
+        // 此时i代表读了多少个字节，返回read方法读取了多少个字节
         return i;
     }
 
