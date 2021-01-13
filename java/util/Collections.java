@@ -4795,6 +4795,7 @@ public class Collections {
      * @since 1.3
      */
     public static <T> List<T> singletonList(T o) {
+        // 实际上是new了一个SingletonList实例
         return new SingletonList<>(o);
     }
 
