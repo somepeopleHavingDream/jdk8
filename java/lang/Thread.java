@@ -560,6 +560,7 @@ class Thread implements Runnable {
      *          the name of the new thread
      */
     public Thread(String name) {
+        // 传入名字
         init(null, null, name, 0);
     }
 

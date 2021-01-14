@@ -59,6 +59,8 @@ public interface Callable<V> {
     /**
      * Computes a result, or throws an exception if unable to do so.
      *
+     * 计算出一个结果，如果抛出一个异常，如果不能计算出来的话。
+     *
      * @return computed result
      * @throws Exception if unable to compute a result
      */

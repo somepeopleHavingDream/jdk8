@@ -90,6 +90,8 @@ public abstract class AbstractExecutorService implements ExecutorService {
     /**
      * Returns a {@code RunnableFuture} for the given callable task.
      *
+     * 对于给定的可调用任务，返回一个RunnableFuture对象实例
+     *
      * @param callable the callable task being wrapped
      * @param <T> the type of the callable's result
      * @return a {@code RunnableFuture} which, when run, will call the
@@ -129,9 +131,14 @@ public abstract class AbstractExecutorService implements ExecutorService {
      * @throws NullPointerException       {@inheritDoc}
      */
     public <T> Future<T> submit(Callable<T> task) {
+        // 对入参任务判空，如果任务为空，则抛出空指针异常
         if (task == null) throw new NullPointerException();
+
+        // 为可调用任务新生一个FutureTask实例
         RunnableFuture<T> ftask = newTaskFor(task);
+        // 执行可调用任务
         execute(ftask);
+        // 返回FutureTask实例
         return ftask;
     }
 

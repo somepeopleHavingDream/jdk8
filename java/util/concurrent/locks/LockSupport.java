@@ -122,6 +122,7 @@ public class LockSupport {
 
     private static void setBlocker(Thread t, Object arg) {
         // Even though volatile, hotspot doesn't need a write barrier here.
+        // 即时易变，热点也不需要在这写入屏障
         UNSAFE.putObject(t, parkBlockerOffset, arg);
     }
 
@@ -209,10 +210,17 @@ public class LockSupport {
      * @since 1.6
      */
     public static void parkNanos(Object blocker, long nanos) {
+        // 如果等待时间大于0
         if (nanos > 0) {
+            // 获得当前线程
             Thread t = Thread.currentThread();
+
+            // 当前线程阻塞nanos
+            // 设置block的作用是让线程被dump出来时，可以看到这个阻塞对象的相关信息，起辅助作用，并不会对实际线程停车和开车起到作用
             setBlocker(t, blocker);
             UNSAFE.park(false, nanos);
+
+            // 当前线程解阻塞
             setBlocker(t, null);
         }
     }
@@ -391,6 +399,7 @@ public class LockSupport {
     }
 
     // Hotspot implementation via intrinsics API
+    // 由热点实现，通过内在API
     private static final sun.misc.Unsafe UNSAFE;
     private static final long parkBlockerOffset;
     private static final long SEED;
