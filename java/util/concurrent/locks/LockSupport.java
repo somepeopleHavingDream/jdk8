@@ -134,6 +134,11 @@ public class LockSupport {
      * is not guaranteed to have any effect at all if the given
      * thread has not been started.
      *
+     * 使用于给定线程的许可有用，如果该许可还未可用的话。
+     * 如果线程在park上被阻塞住，之后该线程将解阻塞。
+     * 否则，对于park的下一次调用将保证不会阻塞。
+     * 如果给定线程还未开启，此操作不保证对会起任何作用。
+     *
      * @param thread the thread to unpark, or {@code null}, in which case
      *        this operation has no effect
      */
@@ -287,26 +292,41 @@ public class LockSupport {
      * Disables the current thread for thread scheduling purposes unless the
      * permit is available.
      *
+     * 除非许可有效，否则出于线程调度目的使当前线程失效。
+     *
      * <p>If the permit is available then it is consumed and the call
      * returns immediately; otherwise the current thread becomes disabled
      * for thread scheduling purposes and lies dormant until one of three
      * things happens:
+     *
+     * 如果许可有效，虽然它将继续并且调用马上返回；
+     * 否则当前线程出于线程调度目的将失效，并且保持休眠，直至下列三种情况发生：
      *
      * <ul>
      *
      * <li>Some other thread invokes {@link #unpark unpark} with the
      * current thread as the target; or
      *
+     * 一些其他的线程以当前线程为目标调用了unpark；或者
+     *
      * <li>Some other thread {@linkplain Thread#interrupt interrupts}
      * the current thread; or
      *
+     * 一些其他的线程Thread#interrupt interrupts中断了当前线程；或者
+     *
      * <li>The call spuriously (that is, for no reason) returns.
+     *
+     * 调用假返回。（无理由地）
      * </ul>
      *
      * <p>This method does <em>not</em> report which of these caused the
      * method to return. Callers should re-check the conditions which caused
      * the thread to park in the first place. Callers may also determine,
      * for example, the interrupt status of the thread upon return.
+     *
+     * 此方法不报告引起方法返回的原因。
+     * 调用者应该第一时间重新检查引起线程停车的条件。
+     * 调用者也可以决定在返回时线程的中断状态。
      */
     public static void park() {
         UNSAFE.park(false, 0L);

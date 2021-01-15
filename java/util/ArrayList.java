@@ -111,6 +111,8 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      * Default initial capacity.
+     *
+     * 默认初始容量
      */
     private static final int DEFAULT_CAPACITY = 10;
 
@@ -235,9 +237,12 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     private static int calculateCapacity(Object[] elementData, int minCapacity) {
+        // 如果数组引用与默认容量空元素数组引用相同，则取默认容量与最小容量的最大值
         if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
             return Math.max(DEFAULT_CAPACITY, minCapacity);
         }
+
+        // 如果入参数组不空，则返回入参最小容量
         return minCapacity;
     }
 
@@ -246,9 +251,12 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     private void ensureExplicitCapacity(int minCapacity) {
+        // 修改次数加1
         modCount++;
 
         // overflow-conscious code
+        // 防溢出代码
+        // 如果需要的最小容量比当前数组长度大，则扩容
         if (minCapacity - elementData.length > 0)
             grow(minCapacity);
     }
@@ -269,19 +277,33 @@ public class ArrayList<E> extends AbstractList<E>
      */
     private void grow(int minCapacity) {
         // overflow-conscious code
+        // 防溢出代码
+
+        // 旧容量
         int oldCapacity = elementData.length;
+        // 计算出来的新容量
         int newCapacity = oldCapacity + (oldCapacity >> 1);
+
+        // 如果计算出来的容量仍然比需要的最小容量小，则将新容量的大小设置为入参最小容量
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
+
+        // 如果新容量比最大数组大小还要大
         if (newCapacity - MAX_ARRAY_SIZE > 0)
             newCapacity = hugeCapacity(minCapacity);
+
         // minCapacity is usually close to size, so this is a win:
+        // 最小容量通常接近于数组大小，这总是成立的：
+        // 以新容量进行数组拷贝
         elementData = Arrays.copyOf(elementData, newCapacity);
     }
 
     private static int hugeCapacity(int minCapacity) {
+        // 如果入参最小容量小于0，说明会溢出，则抛出内容溢出错误
         if (minCapacity < 0) // overflow
             throw new OutOfMemoryError();
+
+        // 如果需要的最小容量大于最大数组长度，则返回整型的最大值作为当前数组的新容量，否则返回最大数组长度作为当前数组的新容量
         return (minCapacity > MAX_ARRAY_SIZE) ?
             Integer.MAX_VALUE :
             MAX_ARRAY_SIZE;
@@ -469,10 +491,13 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * Appends the specified element to the end of this list.
      *
+     * 将指定元素添加到此列表的末尾
+     *
      * @param e element to be appended to this list
      * @return <tt>true</tt> (as specified by {@link Collection#add})
      */
     public boolean add(E e) {
+        // 确保内部容量充分，以接纳新的元素
         ensureCapacityInternal(size + 1);  // Increments modCount!!
         elementData[size++] = e;
         return true;

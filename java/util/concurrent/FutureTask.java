@@ -119,6 +119,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
      */
     private Object outcome; // non-volatile, protected by state reads/writes
     /** The thread running the callable; CASed during run() */
+    // 运行可调用对象的线程；在运行期cas
     private volatile Thread runner;
     /** Treiber stack of waiting threads */
     // Treiberg等待线程堆栈
@@ -188,27 +189,38 @@ public class FutureTask<V> implements RunnableFuture<V> {
     }
 
     public boolean isDone() {
+        // 只要任务不是新建状态，则认为任务已被处理
         return state != NEW;
     }
 
     public boolean cancel(boolean mayInterruptIfRunning) {
+        // 如果任务已经开始，则取消任务失败
+        // 如果cas地设置任务的状态失败，则取消任务失败
         if (!(state == NEW &&
               UNSAFE.compareAndSwapInt(this, stateOffset, NEW,
                   mayInterruptIfRunning ? INTERRUPTING : CANCELLED)))
             return false;
+
+        // 以防中断调用抛出异常
         try {    // in case call to interrupt throws exception
+            // 如果根据入参，允许在运行时中断任务执行
             if (mayInterruptIfRunning) {
                 try {
+                    // 获得执行任务的线程，如果该线程不空，则中断该线程
                     Thread t = runner;
                     if (t != null)
                         t.interrupt();
                 } finally { // final state
+                    // 将任务状态最终设置为被中断
                     UNSAFE.putOrderedInt(this, stateOffset, INTERRUPTED);
                 }
             }
         } finally {
+            // 处理剩余工作
             finishCompletion();
         }
+
+        // 返回取消成功
         return true;
     }
 
@@ -232,12 +244,18 @@ public class FutureTask<V> implements RunnableFuture<V> {
      */
     public V get(long timeout, TimeUnit unit)
         throws InterruptedException, ExecutionException, TimeoutException {
+        // 如果入参时间单元为空，则抛出空指针异常
         if (unit == null)
             throw new NullPointerException();
+
+        // 获取任务状态
         int s = state;
+        // 如果任务处于新建或者计算中，则等待即时处理完成，如果等待完成的结果(即任务状态）仍然小于等于处于计算中或新建状态，则抛出超时异常
         if (s <= COMPLETING &&
             (s = awaitDone(true, unit.toNanos(timeout))) <= COMPLETING)
             throw new TimeoutException();
+
+        // 根据任务状态进行报告
         return report(s);
     }
 
@@ -430,7 +448,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
             if (UNSAFE.compareAndSwapObject(this, waitersOffset, q, null)) {
                 // 循环操作
                 for (;;) {
-                    // 获得当前结点的线程
+                    // 获得当前结点的线程（一般为调用者的线程，即主线程）
                     Thread t = q.thread;
 
                     // 如果当前结点的线程不为空，则置当前结点的线程为空，并且开车当前结点的线程
