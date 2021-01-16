@@ -45,6 +45,8 @@ public
 class FilterOutputStream extends OutputStream {
     /**
      * The underlying output stream to be filtered.
+     *
+     * 将被过滤的底层输出流
      */
     protected OutputStream out;
 
@@ -74,6 +76,7 @@ class FilterOutputStream extends OutputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public void write(int b) throws IOException {
+        // 调用底层输出流（一般是FileOutputStream）的写字节方法
         out.write(b);
     }
 
@@ -118,9 +121,11 @@ class FilterOutputStream extends OutputStream {
      * @see        java.io.FilterOutputStream#write(int)
      */
     public void write(byte b[], int off, int len) throws IOException {
+        // 校验入参
         if ((off | len | (b.length - (len + off)) | (off + len)) < 0)
             throw new IndexOutOfBoundsException();
 
+        // 循环写入字节
         for (int i = 0 ; i < len ; i++) {
             write(b[off + i]);
         }

@@ -59,6 +59,8 @@ class FileOutputStream extends OutputStream
 
     /**
      * True if the file is opened for append.
+     *
+     * 如果文件被打开以用来追加内容，则为真
      */
     private final boolean append;
 
@@ -159,6 +161,7 @@ class FileOutputStream extends OutputStream
      * @see        java.lang.SecurityManager#checkWrite(java.lang.String)
      */
     public FileOutputStream(File file) throws FileNotFoundException {
+        // 不以追加的方式
         this(file, false);
     }
 
@@ -194,22 +197,31 @@ class FileOutputStream extends OutputStream
     public FileOutputStream(File file, boolean append)
         throws FileNotFoundException
     {
+        // 获得文件路径名
         String name = (file != null ? file.getPath() : null);
+
+        // 获得安全管理器，检查该路径是否有读权限
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkWrite(name);
         }
+
+        // 如果文件路径名为空，则抛出空指针异常
         if (name == null) {
             throw new NullPointerException();
         }
+        // 如果文件无效，则抛出文件未找到异常
         if (file.isInvalid()) {
             throw new FileNotFoundException("Invalid file path");
         }
+
+        // 新生一个文件描述符对象，将该文件输入流依附到该文件描述符上，并设置相关属性
         this.fd = new FileDescriptor();
         fd.attach(this);
         this.append = append;
         this.path = name;
 
+        // 打开文件（以覆写或追加的方式，这取决于append的值）
         open(name, append);
     }
 
@@ -262,6 +274,9 @@ class FileOutputStream extends OutputStream
     // wrap native call to allow instrumentation
     /**
      * Opens a file, with the specified name, for overwriting or appending.
+     *
+     * 打开指定文件名的文件，用以覆写或添加。
+     *
      * @param name name of file to be opened
      * @param append whether the file is to be opened in append mode
      */
@@ -282,6 +297,9 @@ class FileOutputStream extends OutputStream
     /**
      * Writes the specified byte to this file output stream. Implements
      * the <code>write</code> method of <code>OutputStream</code>.
+     *
+     * 写入一个指定字节到此文件输出流中。
+     * 实现了OutputStream的写方法。
      *
      * @param      b   the byte to be written.
      * @exception  IOException  if an I/O error occurs.
@@ -340,6 +358,7 @@ class FileOutputStream extends OutputStream
      * @spec JSR-51
      */
     public void close() throws IOException {
+        // 拿到关闭锁，将关闭标记置为真，如果关闭标记已经置为真，则直接返回
         synchronized (closeLock) {
             if (closed) {
                 return;
@@ -347,10 +366,12 @@ class FileOutputStream extends OutputStream
             closed = true;
         }
 
+        // 如果文件通道不为空，则也需要关闭文件通道
         if (channel != null) {
             channel.close();
         }
 
+        // 对所有依附到此文件描述符上的可关闭对象执行关闭方法
         fd.closeAll(new Closeable() {
             public void close() throws IOException {
                close0();

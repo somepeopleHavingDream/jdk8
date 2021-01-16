@@ -546,6 +546,7 @@ class SecurityManager {
      * @since     1.2
      */
     public void checkPermission(Permission perm) {
+        // 检查权限
         java.security.AccessController.checkPermission(perm);
     }
 
@@ -885,6 +886,7 @@ class SecurityManager {
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
     public void checkRead(String file) {
+        // 检查该文件路径是否有读权限
         checkPermission(new FilePermission(file,
             SecurityConstants.FILE_READ_ACTION));
     }

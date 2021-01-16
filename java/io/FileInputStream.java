@@ -49,11 +49,15 @@ public
 class FileInputStream extends InputStream
 {
     /* File Descriptor - handle to the open file */
+    // 文件描述符对象 - 处理打开文件
     private final FileDescriptor fd;
 
     /**
      * The path of the referenced file
      * (null if the stream is created with a file descriptor)
+     *
+     * 被引用文件的路径
+     * （如果流由文件描述符创建则为空）
      */
     private final String path;
 
@@ -121,20 +125,30 @@ class FileInputStream extends InputStream
      * @see        java.lang.SecurityManager#checkRead(java.lang.String)
      */
     public FileInputStream(File file) throws FileNotFoundException {
+        // 获得文件路径名
         String name = (file != null ? file.getPath() : null);
+
+        // 获得安全管理器，检查该路径是否有读权限
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkRead(name);
         }
+
+        // 如果文件路径名为空，则抛出空指针异常
         if (name == null) {
             throw new NullPointerException();
         }
+        // 如果文件无效，则抛出文件未找到异常
         if (file.isInvalid()) {
             throw new FileNotFoundException("Invalid file path");
         }
+
+        // 新生一个文件描述符对象，将该文件输入流依附到该文件描述符上
         fd = new FileDescriptor();
         fd.attach(this);
         path = name;
+
+        // 打开文件（以读的方式）
         open(name);
     }
 
@@ -189,6 +203,9 @@ class FileInputStream extends InputStream
     // wrap native call to allow instrumentation
     /**
      * Opens the specified file for reading.
+     *
+     * 打开指定文件来进行读取。
+     *
      * @param name the name of the file
      */
     private void open(String name) throws FileNotFoundException {
@@ -199,8 +216,13 @@ class FileInputStream extends InputStream
      * Reads a byte of data from this input stream. This method blocks
      * if no input is yet available.
      *
+     * 从此输入流中读取一个字节的数据。
+     * 如果还未有输入可用，则此方法将阻塞。
+     *
      * @return     the next byte of data, or <code>-1</code> if the end of the
      *             file is reached.
+     *
+     *             返回下一个数据的字节，或者返回-1，如果该文件被到达。
      * @exception  IOException  if an I/O error occurs.
      */
     public int read() throws IOException {
@@ -321,16 +343,20 @@ class FileInputStream extends InputStream
      * @spec JSR-51
      */
     public void close() throws IOException {
+        // 拿到关闭锁，将关闭标记置为真，如果关闭标记已经置为真，则直接返回
         synchronized (closeLock) {
             if (closed) {
                 return;
             }
             closed = true;
         }
+
+        // 如果文件通道不为空，则也需要关闭文件通道
         if (channel != null) {
            channel.close();
         }
 
+        // 对所有依附到此文件描述符上的可关闭对象执行关闭方法
         fd.closeAll(new Closeable() {
             public void close() throws IOException {
                close0();
@@ -372,7 +398,9 @@ class FileInputStream extends InputStream
      * @spec JSR-51
      */
     public FileChannel getChannel() {
+        // 上锁
         synchronized (this) {
+            // 如果通道为空，则打开一个通道，并赋值，最后返回
             if (channel == null) {
                 channel = FileChannelImpl.open(fd, path, true, false, this);
             }

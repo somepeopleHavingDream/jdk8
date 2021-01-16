@@ -46,6 +46,8 @@ public
 class FilterInputStream extends InputStream {
     /**
      * The input stream to be filtered.
+     *
+     * 将被过滤的输入流
      */
     protected volatile InputStream in;
 
@@ -104,6 +106,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#read(byte[], int, int)
      */
     public int read(byte b[]) throws IOException {
+        // 实际上是调用底层输入流的范围读取字节方法
         return read(b, 0, b.length);
     }
 
@@ -130,6 +133,7 @@ class FilterInputStream extends InputStream {
      * @see        java.io.FilterInputStream#in
      */
     public int read(byte b[], int off, int len) throws IOException {
+        // 实际上是调用底层输入流（一般为FileInputStream）的范围读取字节方法
         return in.read(b, off, len);
     }
 

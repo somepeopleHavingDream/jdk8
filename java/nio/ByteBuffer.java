@@ -268,6 +268,7 @@ public abstract class ByteBuffer
     // reduce the number of virtual method invocations needed to access these
     // values, which is especially costly when coding small buffers.
     //
+    // 只对堆缓冲区非空
     final byte[] hb;                  // Non-null only for heap buffers
     final int offset;
     boolean isReadOnly;                 // Valid only for heap buffers
@@ -275,6 +276,10 @@ public abstract class ByteBuffer
     // Creates a new buffer with the given mark, position, limit, capacity,
     // backing array, and array offset
     //
+
+    /**
+     * 创建一个带有给定掩码、位置、限制、容量、备份数组和数组偏移的新缓冲区
+     */
     ByteBuffer(int mark, int pos, int lim, int cap,   // package-private
                  byte[] hb, int offset)
     {
@@ -330,8 +335,11 @@ public abstract class ByteBuffer
      *          If the <tt>capacity</tt> is a negative integer
      */
     public static ByteBuffer allocate(int capacity) {
+        // 如果需要分配的容量为负数，则抛出违规参数异常
         if (capacity < 0)
             throw new IllegalArgumentException();
+
+        // 新生一个堆字节缓冲区实例
         return new HeapByteBuffer(capacity, capacity);
     }
 

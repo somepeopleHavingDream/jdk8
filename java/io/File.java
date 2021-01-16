@@ -515,6 +515,7 @@ public class File
      * @return  The string form of this abstract pathname
      */
     public String getPath() {
+        // 返回文件路径
         return path;
     }
 

@@ -54,6 +54,8 @@ public final class FileDescriptor {
     /**
      * Constructs an (invalid) FileDescriptor
      * object.
+     *
+     * 构建一个无效的文件描述符对象。
      */
     public /**/ FileDescriptor() {
         fd = -1;
@@ -170,10 +172,14 @@ public final class FileDescriptor {
      * Attach a Closeable to this FD for tracking.
      * parent reference is added to otherParents when
      * needed to make closeAll simpler.
+     *
+     * 将一个可关闭对象依附到此文件描述符上以跟踪。
+     * 当需要使closeAll更简化，可以将parent引用添加到otherParents上。
      */
     synchronized void attach(Closeable c) {
         if (parent == null) {
             // first caller gets to do this
+            // 首次调用者这样处理
             parent = c;
         } else if (otherParents == null) {
             otherParents = new ArrayList<>();

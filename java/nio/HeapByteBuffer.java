@@ -53,7 +53,7 @@ class HeapByteBuffer
     */
 
     HeapByteBuffer(int cap, int lim) {            // package-private
-
+        // 包私有
         super(-1, 0, lim, cap, new byte[cap], 0);
         /*
         hb = new byte[cap];

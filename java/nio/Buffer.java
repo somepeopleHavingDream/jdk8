@@ -182,6 +182,7 @@ public abstract class Buffer {
         Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.ORDERED;
 
     // Invariants: mark <= position <= limit <= capacity
+    // 定式：mark <= position <= limit <= capacity
     private int mark = -1;
     private int position = 0;
     private int limit;
@@ -194,9 +195,18 @@ public abstract class Buffer {
     // Creates a new buffer with the given mark, position, limit, and capacity,
     // after checking invariants.
     //
+
+    /**
+     * 创建一个带有给定掩码、位置、限制、容量、备份数组和数组偏移的新缓冲区
+     */
     Buffer(int mark, int pos, int lim, int cap) {       // package-private
+        // 包私有
+        // 如果容量为负数，则抛出违规参数异常
         if (cap < 0)
             throw new IllegalArgumentException("Negative capacity: " + cap);
+
+        // 设置缓冲区容量、limit、position、mark
+        // 从这里可以看出缓冲区的相关参数的设置顺序是capacity、limit、position、mark。
         this.capacity = cap;
         limit(lim);
         position(pos);
@@ -240,10 +250,15 @@ public abstract class Buffer {
      *          If the preconditions on <tt>newPosition</tt> do not hold
      */
     public final Buffer position(int newPosition) {
+        // 入参校验
         if ((newPosition > limit) || (newPosition < 0))
             throw new IllegalArgumentException();
+
+        // 设置position，并根据position设置mark
         position = newPosition;
         if (mark > position) mark = -1;
+
+        // 返回此对象
         return this;
     }
 
@@ -271,11 +286,16 @@ public abstract class Buffer {
      *          If the preconditions on <tt>newLimit</tt> do not hold
      */
     public final Buffer limit(int newLimit) {
+        // 校验入参
         if ((newLimit > capacity) || (newLimit < 0))
             throw new IllegalArgumentException();
+
+        // 设置limit参数，并根据limit参数，设置position参数和mark参数
         limit = newLimit;
         if (position > newLimit) position = newLimit;
         if (mark > newLimit) mark = -1;
+
+        // 返回此对象
         return this;
     }
 
@@ -326,6 +346,7 @@ public abstract class Buffer {
      * @return  This buffer
      */
     public final Buffer clear() {
+        // 仍然是设置position、limit、capacity、mark
         position = 0;
         limit = capacity;
         mark = -1;
@@ -337,6 +358,10 @@ public abstract class Buffer {
      * the position is set to zero.  If the mark is defined then it is
      * discarded.
      *
+     * 翻转此缓冲区。
+     * limit将被设置为当前位置，当前位置将被设置为0.
+     * 如果定义了掩码，则此掩码之后将被丢弃。
+     *
      * <p> After a sequence of channel-read or <i>put</i> operations, invoke
      * this method to prepare for a sequence of channel-write or relative
      * <i>get</i> operations.  For example:
@@ -347,13 +372,20 @@ public abstract class Buffer {
      * buf.flip();        // Flip buffer
      * out.write(buf);    // Write header + data to channel</pre></blockquote>
      *
+     * 在一系列通道读或者put操作之后，调用此方法以准备通道写或相关读的一系列操作。
+     *
+     * x
+     *
      * <p> This method is often used in conjunction with the {@link
      * java.nio.ByteBuffer#compact compact} method when transferring data from
      * one place to another.  </p>
      *
+     * 当将数据从一个地方传送到另一个地方时，此方法经常和compact方法使用。
+     *
      * @return  This buffer
      */
     public final Buffer flip() {
+        // 设置limit、position、mark
         limit = position;
         position = 0;
         mark = -1;
@@ -394,6 +426,8 @@ public abstract class Buffer {
     /**
      * Tells whether there are any elements between the current position and
      * the limit.
+     *
+     * 辨别是否在当前位置和极限之间存有一些元素。
      *
      * @return  <tt>true</tt> if, and only if, there is at least one element
      *          remaining in this buffer

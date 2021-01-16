@@ -64,6 +64,9 @@ class BufferedInputStream extends FilterInputStream {
      * The internal buffer array where the data is stored. When necessary,
      * it may be replaced by another array of
      * a different size.
+     *
+     * 数据将被存储的内部缓冲区。
+     * 当有必要时，它也将被不同大小的其他数组所替代。
      */
     protected volatile byte buf[];
 
@@ -180,6 +183,7 @@ class BufferedInputStream extends FilterInputStream {
      * @param   in   the underlying input stream.
      */
     public BufferedInputStream(InputStream in) {
+        // 传入默认缓冲区大小
         this(in, DEFAULT_BUFFER_SIZE);
     }
 
@@ -196,10 +200,15 @@ class BufferedInputStream extends FilterInputStream {
      * @exception IllegalArgumentException if {@code size <= 0}.
      */
     public BufferedInputStream(InputStream in, int size) {
+        // 设置输入流
         super(in);
+
+        // 如果缓冲区大小为负数，则抛出违规参数异常
         if (size <= 0) {
             throw new IllegalArgumentException("Buffer size <= 0");
         }
+
+        // 生成并设置新的缓冲区
         buf = new byte[size];
     }
 

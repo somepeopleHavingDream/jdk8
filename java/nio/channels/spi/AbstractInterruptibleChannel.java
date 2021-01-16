@@ -108,9 +108,13 @@ public abstract class AbstractInterruptibleChannel
      *          If an I/O error occurs
      */
     public final void close() throws IOException {
+        // 拿到关闭锁
         synchronized (closeLock) {
+            // 如果通道还未被打开，则直接返回
             if (!open)
                 return;
+
+            // 通道已经被打开，则置打开标记为假，接着执行实际的关闭通道操作
             open = false;
             implCloseChannel();
         }

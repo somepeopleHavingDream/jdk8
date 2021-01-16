@@ -38,6 +38,8 @@ public
 class BufferedOutputStream extends FilterOutputStream {
     /**
      * The internal buffer where data is stored.
+     *
+     * 数据被存储的内部缓冲区
      */
     protected byte buf[];
 
@@ -46,6 +48,10 @@ class BufferedOutputStream extends FilterOutputStream {
      * in the range <tt>0</tt> through <tt>buf.length</tt>; elements
      * <tt>buf[0]</tt> through <tt>buf[count-1]</tt> contain valid
      * byte data.
+     *
+     * 此缓冲区内有效字节的个数。
+     * 此值总是在0到buf.length之间；
+     * 区间buf[0]到buf[count-1]的元素包含了有效字节数据。
      */
     protected int count;
 
@@ -56,6 +62,7 @@ class BufferedOutputStream extends FilterOutputStream {
      * @param   out   the underlying output stream.
      */
     public BufferedOutputStream(OutputStream out) {
+        // 缓冲区大小设置为8192，即8k
         this(out, 8192);
     }
 
@@ -69,15 +76,22 @@ class BufferedOutputStream extends FilterOutputStream {
      * @exception IllegalArgumentException if size &lt;= 0.
      */
     public BufferedOutputStream(OutputStream out, int size) {
+        // 设置输出流
         super(out);
+
+        // 如果缓冲区大小为负数，则抛出违规参数异常
         if (size <= 0) {
             throw new IllegalArgumentException("Buffer size <= 0");
         }
+
+        // 生成新的缓冲区
         buf = new byte[size];
     }
 
     /** Flush the internal buffer */
+    // 冲刷内部的缓冲区
     private void flushBuffer() throws IOException {
+        // 如果缓冲区中存在有效数据，则将缓冲区内的所有有效数据写入，然后置有效字节数置为0
         if (count > 0) {
             out.write(buf, 0, count);
             count = 0;
@@ -114,17 +128,28 @@ class BufferedOutputStream extends FilterOutputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public synchronized void write(byte b[], int off, int len) throws IOException {
+        // 如果需要写入的长度大于或等于缓冲区的长度
         if (len >= buf.length) {
             /* If the request length exceeds the size of the output buffer,
                flush the output buffer and then write the data directly.
                In this way buffered streams will cascade harmlessly. */
+            /*
+                如果请求长度超过输出缓冲区的大小，则冲刷输出流缓冲区，然后直接输入数据。
+                在这种方式下，缓冲流将无损级联。
+             */
+            // 冲刷缓冲区，先把缓冲区中的存留数据写入
             flushBuffer();
+            // 再直接通过输出流写入，最后返回
             out.write(b, off, len);
             return;
         }
+
+        // 如果需要写入的长度小于缓冲区总长度，但是大于缓冲区的剩余长度，则冲刷缓冲区
         if (len > buf.length - count) {
             flushBuffer();
         }
+
+        // 将需要写入的数据先写入到缓冲区中，增加缓冲区的有效字节数
         System.arraycopy(b, off, buf, count, len);
         count += len;
     }

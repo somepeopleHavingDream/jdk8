@@ -124,6 +124,7 @@ public final class System {
     public final static PrintStream err = null;
 
     /* The security manager for the system.
+        用于此系统的安全管理者
      */
     private static volatile SecurityManager security = null;
 
@@ -324,6 +325,8 @@ public final class System {
 
     /**
      * Gets the system security interface.
+     *
+     * 得到系统安全接口
      *
      * @return  if a security manager has already been established for the
      *          current application, then that security manager is returned;
