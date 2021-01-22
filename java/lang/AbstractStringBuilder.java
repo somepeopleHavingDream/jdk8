@@ -47,11 +47,15 @@ import java.util.Arrays;
 abstract class AbstractStringBuilder implements Appendable, CharSequence {
     /**
      * The value is used for character storage.
+     *
+     * 用作字符存储的值。
      */
     char[] value;
 
     /**
      * The count is the number of characters used.
+     *
+     * count是已使用的字符数量。
      */
     int count;
 
@@ -63,6 +67,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
 
     /**
      * Creates an AbstractStringBuilder of the specified capacity.
+     *
+     * 创建一个指定容量的AbstractStringBuilder。
      */
     AbstractStringBuilder(int capacity) {
         value = new char[capacity];
@@ -120,6 +126,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      */
     private void ensureCapacityInternal(int minimumCapacity) {
         // overflow-conscious code
+        // 溢出意识代码
+        // 如果需要的最小容量大于当前存储字符数组的长度，则扩容
         if (minimumCapacity - value.length > 0) {
             value = Arrays.copyOf(value,
                     newCapacity(minimumCapacity));
@@ -147,6 +155,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      */
     private int newCapacity(int minCapacity) {
         // overflow-conscious code
+        // 溢出意识代码
+        // 计算出新容量
         int newCapacity = (value.length << 1) + 2;
         if (newCapacity - minCapacity < 0) {
             newCapacity = minCapacity;
@@ -442,11 +452,20 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * @return  a reference to this object.
      */
     public AbstractStringBuilder append(String str) {
+        // 如果字符串为空，则添加字符串”null“
         if (str == null)
             return appendNull();
+
+        // 获得要添加字符串的长度
         int len = str.length();
+
+        // 确保内部容量足够满足将要添加的字符串
         ensureCapacityInternal(count + len);
+
+        // 实质是使用System.arraycopy方法
         str.getChars(0, len, value, count);
+
+        // 更新已使用的字符串数量，并返回当前对象本身
         count += len;
         return this;
     }
@@ -489,13 +508,20 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     private AbstractStringBuilder appendNull() {
+        // 获得已使用的字符的数量
         int c = count;
+
+        // 确保内部容量足够接纳新的4个字符
         ensureCapacityInternal(c + 4);
+
+        // 在尾部新增字符串“null”
         final char[] value = this.value;
         value[c++] = 'n';
         value[c++] = 'u';
         value[c++] = 'l';
         value[c++] = 'l';
+
+        // 更新已使用的字符的数量，并返回
         count = c;
         return this;
     }

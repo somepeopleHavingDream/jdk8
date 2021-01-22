@@ -66,14 +66,19 @@ public class InputStreamReader extends Reader {
     /**
      * Creates an InputStreamReader that uses the default charset.
      *
+     * 创建一个使用默认字符集的输出流阅读器。
+     *
      * @param  in   An InputStream
      */
     public InputStreamReader(InputStream in) {
+        // 内部调用了Reader类的构造方法，将入参输入流in当做了一把锁
         super(in);
         try {
+            // 获得并设置用于此输入流阅读器的流解码器
             sd = StreamDecoder.forInputStreamReader(in, this, (String)null); // ## check lock object
         } catch (UnsupportedEncodingException e) {
             // The default encoding should always be available
+            // 默认的编码应该总是可用的
             throw new Error(e);
         }
     }

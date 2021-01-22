@@ -55,6 +55,7 @@ public class FileReader extends InputStreamReader {
     *                   reading.
     */
     public FileReader(String fileName) throws FileNotFoundException {
+        // 装饰者模式，装饰了FileInputStream类，为FileInputStream添加了一些用于其他功能的用途
         super(new FileInputStream(fileName));
     }
 

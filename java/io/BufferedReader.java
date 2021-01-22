@@ -85,6 +85,9 @@ public class BufferedReader extends Reader {
     /** The skipLF flag when the mark was set */
     private boolean markedSkipLF = false;
 
+    /**
+     * 默认字符缓冲区大小为8k
+     */
     private static int defaultCharBufferSize = 8192;
     private static int defaultExpectedLineLength = 80;
 
@@ -92,15 +95,22 @@ public class BufferedReader extends Reader {
      * Creates a buffering character-input stream that uses an input buffer of
      * the specified size.
      *
+     * 创建使用指定大小输入缓冲区的缓冲字符输入流。
+     *
      * @param  in   A Reader
      * @param  sz   Input-buffer size
      *
      * @exception  IllegalArgumentException  If {@code sz <= 0}
      */
     public BufferedReader(Reader in, int sz) {
+        // 调用父类构造方法
         super(in);
+
+        // 判断入参
         if (sz <= 0)
             throw new IllegalArgumentException("Buffer size <= 0");
+
+        // 设置字符输入流、字符缓冲区、下一个字符的索引、字符总数
         this.in = in;
         cb = new char[sz];
         nextChar = nChars = 0;
@@ -109,6 +119,8 @@ public class BufferedReader extends Reader {
     /**
      * Creates a buffering character-input stream that uses a default-sized
      * input buffer.
+     *
+     * 创建使用默认大小输入缓冲区的缓冲字符输出流。
      *
      * @param  in   A Reader
      */
@@ -377,6 +389,9 @@ public class BufferedReader extends Reader {
      * of a line feed ('\n'), a carriage return ('\r'), or a carriage return
      * followed immediately by a linefeed.
      *
+     * 读取一行文本。
+     * 行被认为是由换行、回车、回车换行符终止的文本。
+     *
      * @return     A String containing the contents of the line, not including
      *             any line-termination characters, or null if the end of the
      *             stream has been reached
@@ -386,6 +401,7 @@ public class BufferedReader extends Reader {
      * @see java.nio.file.Files#readAllLines
      */
     public String readLine() throws IOException {
+        // 忽略换行符（内部具体过程，暂不细究）
         return readLine(false);
     }
 

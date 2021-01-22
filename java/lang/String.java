@@ -189,6 +189,7 @@ public final class String
      *          characters outside the bounds of the {@code value} array
      */
     public String(char value[], int offset, int count) {
+        // 入参校验和处理
         if (offset < 0) {
             throw new StringIndexOutOfBoundsException(offset);
         }
@@ -202,9 +203,12 @@ public final class String
             }
         }
         // Note: offset or count might be near -1>>>1.
+        // 注意：偏移和数量可能接近-1>>>1
         if (offset > value.length - count) {
             throw new StringIndexOutOfBoundsException(offset + count);
         }
+
+        // 使用数组范围复制方法
         this.value = Arrays.copyOfRange(value, offset, offset+count);
     }
 
@@ -816,6 +820,7 @@ public final class String
      *                {@code dst.length}</ul>
      */
     public void getChars(int srcBegin, int srcEnd, char dst[], int dstBegin) {
+        // 入参判断
         if (srcBegin < 0) {
             throw new StringIndexOutOfBoundsException(srcBegin);
         }
@@ -825,6 +830,8 @@ public final class String
         if (srcBegin > srcEnd) {
             throw new StringIndexOutOfBoundsException(srcEnd - srcBegin);
         }
+
+        // 数组复制
         System.arraycopy(value, srcBegin, dst, dstBegin, srcEnd - srcBegin);
     }
 

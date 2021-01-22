@@ -84,6 +84,8 @@ public final class StringBuilder
     /**
      * Constructs a string builder with no characters in it and an
      * initial capacity of 16 characters.
+     *
+     * 创建一个不带字符的字符串建造者，并且它有16个字符的内部容量。
      */
     public StringBuilder() {
         super(16);
@@ -133,6 +135,7 @@ public final class StringBuilder
 
     @Override
     public StringBuilder append(String str) {
+        // 调用父类的append方法，然后返回对象本身
         super.append(str);
         return this;
     }
@@ -404,6 +407,7 @@ public final class StringBuilder
     @Override
     public String toString() {
         // Create a copy, don't share the array
+        // 创建一个副本，不共享数组
         return new String(value, 0, count);
     }
 

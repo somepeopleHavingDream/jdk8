@@ -3663,9 +3663,12 @@ public class Arrays {
      * @since 1.6
      */
     public static char[] copyOfRange(char[] original, int from, int to) {
+        // 计算并判断长度
         int newLength = to - from;
         if (newLength < 0)
             throw new IllegalArgumentException(from + " > " + to);
+
+        // 创建一个计算长度的副本，然后复制，最后返回副本数组
         char[] copy = new char[newLength];
         System.arraycopy(original, from, copy, 0,
                          Math.min(original.length - from, newLength));

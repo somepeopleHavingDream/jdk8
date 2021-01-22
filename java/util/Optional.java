@@ -50,11 +50,15 @@ import java.util.function.Supplier;
 public final class Optional<T> {
     /**
      * Common instance for {@code empty()}.
+     *
+     * 用于empty()方法的公共实例
      */
     private static final Optional<?> EMPTY = new Optional<>();
 
     /**
      * If non-null, the value; if null, indicates no value is present
+     * 如果非空，则就是此值；
+     * 如果为空，标志没有值存在
      */
     private final T value;
 
@@ -71,6 +75,9 @@ public final class Optional<T> {
     /**
      * Returns an empty {@code Optional} instance.  No value is present for this
      * Optional.
+     *
+     * 返回一个空的Optional实例。
+     * 对于此Optional对象，没有值是存在的。
      *
      * @apiNote Though it may be tempting to do so, avoid testing if an object
      * is empty by comparing with {@code ==} against instances returned by
@@ -89,15 +96,20 @@ public final class Optional<T> {
     /**
      * Constructs an instance with the value present.
      *
+     * 构建一个带有存在值的实例。
+     *
      * @param value the non-null value to be present
      * @throws NullPointerException if value is null
      */
     private Optional(T value) {
+        // 要求入参对象不为空，然后设置
         this.value = Objects.requireNonNull(value);
     }
 
     /**
      * Returns an {@code Optional} with the specified present non-null value.
+     *
+     * 返回一个带有指定存在非空值的Optional对象。
      *
      * @param <T> the class of the value
      * @param value the value to be present, which must be non-null

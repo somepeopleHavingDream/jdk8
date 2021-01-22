@@ -199,6 +199,7 @@ public final class Objects {
      * @throws NullPointerException if {@code obj} is {@code null}
      */
     public static <T> T requireNonNull(T obj) {
+        // 如果入参对象为空，则抛出空指针异常，否则返回入参对象即可
         if (obj == null)
             throw new NullPointerException();
         return obj;

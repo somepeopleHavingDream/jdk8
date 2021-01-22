@@ -71,12 +71,17 @@ public abstract class Reader implements Readable, Closeable {
      * Creates a new character-stream reader whose critical sections will
      * synchronize on the given object.
      *
+     * 创建一个新的字符流阅读器，该阅读器的关键部分将在给定对象上被同步。
+     *
      * @param lock  The Object to synchronize on.
      */
     protected Reader(Object lock) {
+        // 锁为空，则抛出空指针异常
         if (lock == null) {
             throw new NullPointerException();
         }
+
+        // 设置锁
         this.lock = lock;
     }
 
