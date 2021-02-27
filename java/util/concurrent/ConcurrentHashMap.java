@@ -1028,9 +1028,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 tab = initTable();
             // 如果哈希值对应的结点为空
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
-                // 在该位置cas地插入一个新的结点，并退出循环
+                // 在该位置cas地存储新的结点，并退出循环
                 if (casTabAt(tab, i, null,
                         new Node<K,V>(hash, key, value, null)))
+                    // 当添加一个空桶的时候不需要锁
                     break;                   // no lock when adding to empty bin
             }
             // 如果对应位置的结点不为空，且对应位置的结点的哈希为-1，说明当前表正在被其他线程执行重新分配大小操作，对此不做更进一步探究
@@ -1040,11 +1041,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             else {
                 V oldVal = null;
 
-                // 锁住该结点
+                // 锁住该结点（首结点）
                 synchronized (f) {
                     // 一般来说tabAt(tab, i) == f是成立的，但是必须考虑到其他线程可能带来的情况，因此此处再判断一次
                     if (tabAt(tab, i) == f) {
-                        // 如果当前结点的哈希值大于等于0（似乎当前的哈希值大于等于0意味着结点类型不是树型结点，也就是说结点的哈希值代表了一些东西，比如结点类型之类的）
+                        // 如果当前结点的哈希值大于等于0（似乎当前结点的哈希值大于等于0意味着结点类型不是树型结点，也就是说结点的哈希值代表了一些东西，比如结点类型之类的）
                         if (fh >= 0) {
                             // 遍历水平方向的结点，同时记录结点的个数
                             binCount = 1;
@@ -1098,7 +1099,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             }
         }
 
-        // 更新表的大小，并返回
+        // 如果代码执行到这，说明哈希表中原本不存在对入参键的映射，但此时已经在表中某处该映射，因此存储了更新表的大小，并返回空
         addCount(1L, binCount);
         return null;
     }

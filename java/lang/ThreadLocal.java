@@ -87,6 +87,10 @@ public class ThreadLocal<T> {
     /**
      * The next hash code to be given out. Updated atomically. Starts at
      * zero.
+     *
+     * 下一个将要被给出的哈希码。
+     * 自动更新。
+     * 从0开始。
      */
     private static AtomicInteger nextHashCode =
         new AtomicInteger();
@@ -100,6 +104,8 @@ public class ThreadLocal<T> {
 
     /**
      * Returns the next hash code.
+     *
+     * 返回下一个哈希码。
      */
     private static int nextHashCode() {
         return nextHashCode.getAndAdd(HASH_INCREMENT);
@@ -138,6 +144,7 @@ public class ThreadLocal<T> {
      * @since 1.8
      */
     public static <S> ThreadLocal<S> withInitial(Supplier<? extends S> supplier) {
+        // 实际上是生成了一个SuppliedThreadLocal实例
         return new SuppliedThreadLocal<>(supplier);
     }
 
@@ -157,8 +164,12 @@ public class ThreadLocal<T> {
      * @return the current thread's value of this thread-local
      */
     public T get() {
+        // 获得当前线程
         Thread t = Thread.currentThread();
+        // 通过线程，获得线程本地Map
         ThreadLocalMap map = getMap(t);
+
+        // 如果map不为空，则获得该对象实例对应的条目
         if (map != null) {
             ThreadLocalMap.Entry e = map.getEntry(this);
             if (e != null) {
@@ -226,6 +237,9 @@ public class ThreadLocal<T> {
      * Get the map associated with a ThreadLocal. Overridden in
      * InheritableThreadLocal.
      *
+     * 获得与线程本地相关联的map。
+     * 在可继承线程本地里被覆写。
+     *
      * @param  t the current thread
      * @return the map
      */
@@ -270,6 +284,8 @@ public class ThreadLocal<T> {
     /**
      * An extension of ThreadLocal that obtains its initial value from
      * the specified {@code Supplier}.
+     *
+     * 从指定Supplier中获得初始值的线程本地扩展。
      */
     static final class SuppliedThreadLocal<T> extends ThreadLocal<T> {
 
@@ -323,6 +339,9 @@ public class ThreadLocal<T> {
         /**
          * The table, resized as necessary.
          * table.length MUST always be a power of two.
+         *
+         * 表，如果有需要会重新分配大小。
+         * 表长度必须总是2的幂。
          */
         private Entry[] table;
 
@@ -411,11 +430,15 @@ public class ThreadLocal<T> {
          * @return the entry associated with key, or null if no such
          */
         private Entry getEntry(ThreadLocal<?> key) {
+            // 通过键的线程本地哈希码和表长按位与，得到该键在表中的下标处
             int i = key.threadLocalHashCode & (table.length - 1);
+            // 获得该键对应的值
             Entry e = table[i];
+            // 如果该值不为空，并且该值的弱引用和键引用相同，则返回该entry
             if (e != null && e.get() == key)
                 return e;
             else
+                // 如果该项为空或者该项的引用与键不相同
                 return getEntryAfterMiss(key, i, e);
         }
 
@@ -429,13 +452,19 @@ public class ThreadLocal<T> {
          * @return the entry associated with key, or null if no such
          */
         private Entry getEntryAfterMiss(ThreadLocal<?> key, int i, Entry e) {
+            // 记录表和表长度
             Entry[] tab = table;
             int len = tab.length;
 
+            // 当项不为空时
             while (e != null) {
+                // 获得该项的ThreadLocal引用
                 ThreadLocal<?> k = e.get();
+
+                // 如果该项的ThreadLocal引用与入参键引用相同，则返回该项
                 if (k == key)
                     return e;
+                // 如果ThreadLocal引用为空，则清除该引用所在的项
                 if (k == null)
                     expungeStaleEntry(i);
                 else
@@ -587,15 +616,18 @@ public class ThreadLocal<T> {
          * for expunging).
          */
         private int expungeStaleEntry(int staleSlot) {
+            // 记录表和表长
             Entry[] tab = table;
             int len = tab.length;
 
             // expunge entry at staleSlot
+            // 清除过时槽的项
             tab[staleSlot].value = null;
             tab[staleSlot] = null;
             size--;
 
             // Rehash until we encounter null
+            // 再hash，直到我们遭遇空
             Entry e;
             int i;
             for (i = nextIndex(staleSlot, len);

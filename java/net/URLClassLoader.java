@@ -73,6 +73,9 @@ import sun.security.util.SecurityConstants;
  */
 public class URLClassLoader extends SecureClassLoader implements Closeable {
     /* The search path for classes and resources */
+    /**
+     * 用于类和资源的搜索路径
+     */
     private final URLClassPath ucp;
 
     /* The context to be used when loading classes and resources */
@@ -362,8 +365,12 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
             result = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<Class<?>>() {
                     public Class<?> run() throws ClassNotFoundException {
+                        // 获得类的包完整路径，如/a/b/c.class
                         String path = name.replace('.', '/').concat(".class");
+                        // 根据路径获得资源
                         Resource res = ucp.getResource(path, false);
+
+                        // 如果资源不为空，则定义类
                         if (res != null) {
                             try {
                                 return defineClass(name, res);
@@ -371,6 +378,7 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
                                 throw new ClassNotFoundException(name, e);
                             }
                         } else {
+                            // 如果资源为空，则返回空
                             return null;
                         }
                     }
@@ -442,24 +450,37 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      * used.
      */
     private Class<?> defineClass(String name, Resource res) throws IOException {
+        // 记录系统当前时间、类名开始的下标位置，代码源的统一资源定位符
         long t0 = System.nanoTime();
         int i = name.lastIndexOf('.');
         URL url = res.getCodeSourceURL();
+
+        // 如果存在类名
         if (i != -1) {
+            // 获得完整包名
             String pkgname = name.substring(0, i);
+
             // Check if package already loaded.
+            // 检查包是否已经被加载
+            // 拿到货单，内部定义包
             Manifest man = res.getManifest();
             definePackageInternal(pkgname, man, url);
         }
+
         // Now read the class bytes and define the class
+        // 现在读取字节码并且定义类
+        // 从资源中获得字节缓冲区
         java.nio.ByteBuffer bb = res.getByteBuffer();
         if (bb != null) {
             // Use (direct) ByteBuffer:
+            // 使用（直接）字节缓冲区
+            // 如果字节缓冲区不为空
             CodeSigner[] signers = res.getCodeSigners();
             CodeSource cs = new CodeSource(url, signers);
             sun.misc.PerfCounter.getReadClassBytesTime().addElapsedTimeFrom(t0);
             return defineClass(name, bb, cs);
         } else {
+            // 如果字节缓冲区为空
             byte[] b = res.getBytes();
             // must read certificates AFTER reading bytes.
             CodeSigner[] signers = res.getCodeSigners();

@@ -656,7 +656,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @return previous value, or null if none
      */
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
-                   boolean evict) {
+                       boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
 
         // 如果哈希表为空，或者长度为0，则需要扩容，并且记录扩容后的长度
@@ -670,14 +670,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         else {
             Node<K,V> e; K k;
 
-            // 存在三种情况，第一种情况：对应位置的结点键与入参键相同，则直接用入参值覆盖掉原来结点的值
+            // 存在三种情况，第一种情况：对应位置的结点键与入参键相同，则记录键相同结点的引用
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
             // 如果对应位置的结点是树型结点，则做另外处理，涉及到红黑树
             else if (p instanceof TreeNode)
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
-            // 否则，进行水平方向的其他操作
+            // 否则，即入参键与该结点的键不同，此结点也不是树型结点，则进行水平方向的其他操作
             else {
                 for (int binCount = 0; ; ++binCount) {
                     // 如果水平方向上无下一个结点，则生成一个新的结点，并将上一个结点与该新生结点进行连接
@@ -702,6 +702,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
 
             // 存在对于键的映射
+            // 此时e指向了那个需要进行变动的结点位置
             if (e != null) { // existing mapping for key
                 // 记录旧值，用于返回
                 V oldValue = e.value;
@@ -718,7 +719,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
         }
 
-        // 如果程序执行到了这，说明表中存在对入参键的映射，那么需要更新修改次数modCount和表大小，并且在更新表大小之后，需要考虑是否需要重新分配表空间
+        // 如果程序执行到了这，说明表中原本不存在对入参键的映射，那么需要更新修改次数modCount和表大小，并且在更新表大小之后，需要考虑是否需要重新分配表空间
         ++modCount;
 
         // 如果表空间大小超过阈值，则重新分配表空间

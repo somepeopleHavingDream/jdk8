@@ -185,6 +185,10 @@ public abstract class ClassLoader {
     // The parent class loader for delegation
     // Note: VM hardcoded the offset of this field, thus all new fields
     // must be added *after* it.
+    /**
+     * 用于委托的父类加载器
+     * 注意：虚拟机硬编码了此字段的偏移，因此所有新的字段必须要被添加到此字段之后。
+     */
     private final ClassLoader parent;
 
     /**
@@ -237,6 +241,10 @@ public abstract class ClassLoader {
     // class loader is parallel capable.
     // Note: VM also uses this field to decide if the current class loader
     // is parallel capable and the appropriate lock object for class loading.
+    /**
+     * 当类加载器是可并行的，将类名映射到对应的锁对象。
+     * 注意：虚拟机也使用这个字段以决定是否当前类加载器是可并发的，也决定对此类加载合适的锁。
+     */
     private final ConcurrentHashMap<String, Object> parallelLockMap;
 
     // Hashtable that maps packages to certs
@@ -395,37 +403,55 @@ public abstract class ClassLoader {
     protected Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException
     {
+        // 加锁，这说明类加载器加载字节码的时候是线程安全的
         synchronized (getClassLoadingLock(name)) {
             // First, check if the class has already been loaded
+            // 首先，检查是否类已经被加载
             Class<?> c = findLoadedClass(name);
+
+            // 如果类未被加载
             if (c == null) {
+                // 记录开始加载时间
                 long t0 = System.nanoTime();
+
                 try {
+                    // 如果父类加载器不为空，则由父类加载器加载类（递归加载）
                     if (parent != null) {
                         c = parent.loadClass(name, false);
                     } else {
+                        // 如果父类加载器为空，则找由引导类加载器加载的类
                         c = findBootstrapClassOrNull(name);
                     }
                 } catch (ClassNotFoundException e) {
                     // ClassNotFoundException thrown if class not found
                     // from the non-null parent class loader
+                    /*
+                        如果从非空父类加载器中没有找到该类，则会抛出类未被找到异常，在此进行捕获，但不做其他处理
+                     */
                 }
 
+                // 如果类对象实例为空
                 if (c == null) {
                     // If still not found, then invoke findClass in order
                     // to find the class.
+                    // 如果仍未找到，则调用findClass方法以寻找此类（字节码），并且记录当前加载时间
                     long t1 = System.nanoTime();
                     c = findClass(name);
 
                     // this is the defining class loader; record the stats
+                    // 这是定义了的类加载器；记录统计数据。
                     sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
                     sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
                     sun.misc.PerfCounter.getFindClasses().increment();
                 }
             }
+
+            // 如果需要解析（“解析”实际上是链接）此类对象实例，则解析此对象实例
             if (resolve) {
                 resolveClass(c);
             }
+
+            // 返回类对象实例
             return c;
         }
     }
@@ -451,14 +477,20 @@ public abstract class ClassLoader {
      * @since  1.7
      */
     protected Object getClassLoadingLock(String className) {
+        // 将当前实例对象作为锁
         Object lock = this;
+
+        // 如果并行锁映射不为空
         if (parallelLockMap != null) {
+            // 创建一个新的锁实例，并在并行锁映射中不存在的情况下，将该锁实例添加到并行锁映射中
             Object newLock = new Object();
             lock = parallelLockMap.putIfAbsent(className, newLock);
             if (lock == null) {
                 lock = newLock;
             }
         }
+
+        // 返回锁实例
         return lock;
     }
 
@@ -665,7 +697,10 @@ public abstract class ClassLoader {
 
     private String defineClassSourceLocation(ProtectionDomain pd)
     {
+        // 获得代码源
         CodeSource cs = pd.getCodeSource();
+
+        // 如果代码源不为空并且代码源的地址不为空，则返回代码源的地址
         String source = null;
         if (cs != null && cs.getLocation() != null) {
             source = cs.getLocation().toString();
@@ -675,8 +710,12 @@ public abstract class ClassLoader {
 
     private void postDefineClass(Class<?> c, ProtectionDomain pd)
     {
+        // 如果代码源不为空
         if (pd.getCodeSource() != null) {
+            // 凭证
             Certificate certs[] = pd.getCodeSource().getCertificates();
+
+            // 如果凭证不为空，则设置签名者
             if (certs != null)
                 setSigners(c, certs);
         }
@@ -751,10 +790,15 @@ public abstract class ClassLoader {
                                          ProtectionDomain protectionDomain)
         throws ClassFormatError
     {
+        // 预定义类
         protectionDomain = preDefineClass(name, protectionDomain);
+        // 定义类源地址
         String source = defineClassSourceLocation(protectionDomain);
+        // 获得类对象实例
         Class<?> c = defineClass1(name, b, off, len, protectionDomain, source);
+        // 发布定义类
         postDefineClass(c, protectionDomain);
+        // 返回类对象实例
         return c;
     }
 
@@ -945,6 +989,11 @@ public abstract class ClassLoader {
      * class is linked as described in the "Execution" chapter of
      * <cite>The Java&trade; Language Specification</cite>.
      *
+     * 链接指定的类。
+     * 此方法（误导性命名）通常被类加载器使用以链接类。
+     * 如果类c已经被链接，之后此方法将简单返回。
+     * 否则，此类将如Java语言规范里“执行”这一章节所描述得那样被链接。
+     *
      * @param  c
      *         The class to link
      *
@@ -1000,6 +1049,9 @@ public abstract class ClassLoader {
     /**
      * Returns a class loaded by the bootstrap class loader;
      * or return null if not found.
+     *
+     * 返回被引导类加载器加载的类；
+     * 如果没有找到则返回空。
      */
     private Class<?> findBootstrapClassOrNull(String name)
     {
@@ -1026,6 +1078,7 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final Class<?> findLoadedClass(String name) {
+        // 检查类名，如果检查失败则返回空，否则返回加载的类对象实例
         if (!checkName(name))
             return null;
         return findLoadedClass0(name);
@@ -1046,6 +1099,7 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final void setSigners(Class<?> c, Object[] signers) {
+        // 设置签名者
         c.setSigners(signers);
     }
 
