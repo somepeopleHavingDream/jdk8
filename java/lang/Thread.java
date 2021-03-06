@@ -176,6 +176,7 @@ class Thread implements Runnable {
     private ThreadGroup group;
 
     /* The context ClassLoader for this thread */
+    // 用于此线程的上下文类加载器
     private ClassLoader contextClassLoader;
 
     /* The inherited AccessControlContext of this thread */

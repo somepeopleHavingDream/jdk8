@@ -186,6 +186,9 @@ public final class ServiceLoader<S>
     implements Iterable<S>
 {
 
+    /**
+     * 前缀
+     */
     private static final String PREFIX = "META-INF/services/";
 
     // The class or interface representing the service being loaded
@@ -195,12 +198,15 @@ public final class ServiceLoader<S>
     private final ClassLoader loader;
 
     // The access control context taken when the ServiceLoader is created
+    // 当服务加载器被创建，访问控制上下文被采用
     private final AccessControlContext acc;
 
     // Cached providers, in instantiation order
+    // 以实例化顺序缓存提供者（服务名->服务实例）
     private LinkedHashMap<String,S> providers = new LinkedHashMap<>();
 
     // The current lazy-lookup iterator
+    // 当前懒查找迭代器
     private LazyIterator lookupIterator;
 
     /**
@@ -215,14 +221,19 @@ public final class ServiceLoader<S>
      * can be installed into a running Java virtual machine.
      */
     public void reload() {
+        // 清除提供者集合
         providers.clear();
+        // 实例化一个懒加载迭代器，名为“查找迭代器”
         lookupIterator = new LazyIterator(service, loader);
     }
 
     private ServiceLoader(Class<S> svc, ClassLoader cl) {
+        // 设置service、loader、acc成员变量
         service = Objects.requireNonNull(svc, "Service interface cannot be null");
         loader = (cl == null) ? ClassLoader.getSystemClassLoader() : cl;
         acc = (System.getSecurityManager() != null) ? AccessController.getContext() : null;
+
+        // 重新加载
         reload();
     }
 
@@ -248,36 +259,54 @@ public final class ServiceLoader<S>
     // Parse a single line from the given configuration file, adding the name
     // on the line to the names list.
     //
+    // 从给定配置文件中解析一行，将行内的名字添加到名称列表中
     private int parseLine(Class<?> service, URL u, BufferedReader r, int lc,
                           List<String> names)
         throws IOException, ServiceConfigurationError
     {
+        // 读取一行，如果为空，则直接返回
         String ln = r.readLine();
         if (ln == null) {
             return -1;
         }
+
+        // 只取每行#字符之前的内容，即只读取类名
         int ci = ln.indexOf('#');
         if (ci >= 0) ln = ln.substring(0, ci);
         ln = ln.trim();
+
+        // 记录长度
         int n = ln.length();
+        // 如果长度不为0
         if (n != 0) {
+            // 如果截取的字符串中存在空格或制表符，则解析失败
             if ((ln.indexOf(' ') >= 0) || (ln.indexOf('\t') >= 0))
                 fail(service, u, lc, "Illegal configuration-file syntax");
+
+            // 得到截取字符串起始位置的码点
             int cp = ln.codePointAt(0);
+            // 如果起始字符不是以Java标识符开始的，则解析失败
             if (!Character.isJavaIdentifierStart(cp))
                 fail(service, u, lc, "Illegal provider-class name: " + ln);
+
+            // 检查截取字符串中是否存在非Java标识符的部分，如果存在，则解析失败
             for (int i = Character.charCount(cp); i < n; i += Character.charCount(cp)) {
                 cp = ln.codePointAt(i);
                 if (!Character.isJavaIdentifierPart(cp) && (cp != '.'))
                     fail(service, u, lc, "Illegal provider-class name: " + ln);
             }
+
+            // 如果提供者里不包含此提供者名，并且名称列表里也不包含此提供者名，则将此提供者名添加到名称列表中
             if (!providers.containsKey(ln) && !names.contains(ln))
                 names.add(ln);
         }
+
+        // 返回需要解析的下一行行号
         return lc + 1;
     }
 
     // Parse the content of the given URL as a provider-configuration file.
+    // 将给定统一资源定位符的内容解析为提供者配置文件。
     //
     // @param  service
     //         The service type for which providers are being sought;
@@ -299,15 +328,23 @@ public final class ServiceLoader<S>
     {
         InputStream in = null;
         BufferedReader r = null;
+        // 提供者名称集合
         ArrayList<String> names = new ArrayList<>();
+
         try {
+            // 打开流
             in = u.openStream();
+            // 将输入流转换为缓冲字符输入流
             r = new BufferedReader(new InputStreamReader(in, "utf-8"));
+
+            // 逐行解析，直至解析完全部行
             int lc = 1;
             while ((lc = parseLine(service, u, r, lc, names)) >= 0);
         } catch (IOException x) {
+            // 捕获并处理解析失败的IO异常
             fail(service, "Error reading configuration file", x);
         } finally {
+            // 善后处理，关闭流
             try {
                 if (r != null) r.close();
                 if (in != null) in.close();
@@ -315,80 +352,143 @@ public final class ServiceLoader<S>
                 fail(service, "Error closing configuration file", y);
             }
         }
+
+        // 返回提供者名称迭代器
         return names.iterator();
     }
 
     // Private inner class implementing fully-lazy provider lookup
-    //
+    // 实现完全懒提供者查找的私有内部类
     private class LazyIterator
         implements Iterator<S>
     {
-
+        /**
+         * 所需要的服务类引用
+         */
         Class<S> service;
+
+        /**
+         * 类加载器
+         */
         ClassLoader loader;
+
+        /**
+         * 统一资源定位符枚举实例
+         */
         Enumeration<URL> configs = null;
+
+        /**
+         * 提供者名称迭代器
+         */
         Iterator<String> pending = null;
+
+        /**
+         * 下一个服务名称
+         */
         String nextName = null;
 
         private LazyIterator(Class<S> service, ClassLoader loader) {
+            // 设置服务和类加载器
             this.service = service;
             this.loader = loader;
         }
 
+        /**
+         * 是否有下一个服务
+         *
+         * @return 是否有下一个服务
+         */
         private boolean hasNextService() {
+            // 如果下一个服务的名字不为空，则直接返回真
             if (nextName != null) {
                 return true;
             }
+
+            // 这部分代码的作用是获取统一资源定位符枚举实例
+            // 如果统一资源定位符枚举实例为空
             if (configs == null) {
                 try {
+                    // 获取服务完整名称
                     String fullName = PREFIX + service.getName();
+
+                    // 如果类加载器为空，则通过类加载器的公共方法获取统一资源定位符枚举实例
                     if (loader == null)
                         configs = ClassLoader.getSystemResources(fullName);
                     else
+                        // 类加载器不为空，则通过该类加载器获取统一资源定位符实例
                         configs = loader.getResources(fullName);
                 } catch (IOException x) {
+                    // 如果捕获到了任何输入输出异常，则做失败处理
                     fail(service, "Error locating configuration files", x);
                 }
             }
+
+            // 如果待办迭代器为空或者待办迭代器没有下一个元素
             while ((pending == null) || !pending.hasNext()) {
+                // 如果统一资源定位符枚举实例没有更多的元素，则直接返回假
                 if (!configs.hasMoreElements()) {
                     return false;
                 }
+
+                // 否则，即存在下一个服务，则进行解析，获得所有提供者名称迭代器
                 pending = parse(service, configs.nextElement());
             }
+
+            // 设置下一个服务的名称，最后返回真
             nextName = pending.next();
             return true;
         }
 
+        /**
+         * 返回下一个服务
+         *
+         * @return 下一个服务
+         */
         private S nextService() {
+            // 如果没有下一个服务，则抛出异常
             if (!hasNextService())
                 throw new NoSuchElementException();
+
+            // 获得下一个服务的名称，并重置下一个服务引用
             String cn = nextName;
             nextName = null;
+
             Class<?> c = null;
             try {
+                // 类加载服务类，但并不实例化
                 c = Class.forName(cn, false, loader);
             } catch (ClassNotFoundException x) {
+                // 捕获并处理类未被找到异常
                 fail(service,
                      "Provider " + cn + " not found");
             }
+
+            // 如果service与类加载出来的类变量不具备继承关系，则失败
             if (!service.isAssignableFrom(c)) {
                 fail(service,
                      "Provider " + cn  + " not a subtype");
             }
             try {
+                // 生成实例，强转为泛型实例
                 S p = service.cast(c.newInstance());
+                // 将服务名和服务实例放入到提供者中，做一个缓存
                 providers.put(cn, p);
+
+                // 返回服务实例
                 return p;
             } catch (Throwable x) {
+                // 捕获并处理可抛出异常
                 fail(service,
                      "Provider " + cn + " could not be instantiated",
                      x);
             }
+
+            // 抛出Error，但这不可能发生
             throw new Error();          // This cannot happen
         }
 
         public boolean hasNext() {
+            // 如果访问控制器为空，则调用hasNextService方法，否则做其他处理
             if (acc == null) {
                 return hasNextService();
             } else {
@@ -400,6 +500,7 @@ public final class ServiceLoader<S>
         }
 
         public S next() {
+            // 如果访问控制器为空，则调用nextService方法，否则做其他处理
             if (acc == null) {
                 return nextService();
             } else {
@@ -410,6 +511,9 @@ public final class ServiceLoader<S>
             }
         }
 
+        /**
+         * 不支持移除操作
+         */
         public void remove() {
             throw new UnsupportedOperationException();
         }
@@ -463,23 +567,34 @@ public final class ServiceLoader<S>
      *          service
      */
     public Iterator<S> iterator() {
+        // 生成一个迭代器实例
         return new Iterator<S>() {
 
+            // 获得服务提供者集合的迭代器
             Iterator<Map.Entry<String,S>> knownProviders
                 = providers.entrySet().iterator();
 
             public boolean hasNext() {
+                // 如果已知服务提供者迭代器有下一个提供者，则直接返回真
                 if (knownProviders.hasNext())
                     return true;
+
+                // 如果已知提供者迭代器没有下一个提供者，则找查找迭代器
                 return lookupIterator.hasNext();
             }
 
             public S next() {
+                // 如果在已知提供者迭代器里找到，则直接返回迭代器实例
                 if (knownProviders.hasNext())
                     return knownProviders.next().getValue();
+
+                // 否则，返回查找迭代器里的下一个实例
                 return lookupIterator.next();
             }
 
+            /**
+             * 不支持删除操作
+             */
             public void remove() {
                 throw new UnsupportedOperationException();
             }
@@ -507,6 +622,7 @@ public final class ServiceLoader<S>
     public static <S> ServiceLoader<S> load(Class<S> service,
                                             ClassLoader loader)
     {
+        // 生成并返回ServiceLoader实例
         return new ServiceLoader<>(service, loader);
     }
 
@@ -534,6 +650,7 @@ public final class ServiceLoader<S>
      * @return A new service loader
      */
     public static <S> ServiceLoader<S> load(Class<S> service) {
+        // 获得线程上下文类加载器，将此类加载器作为入参传进去
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         return ServiceLoader.load(service, cl);
     }

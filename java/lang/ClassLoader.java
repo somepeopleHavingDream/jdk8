@@ -1181,13 +1181,19 @@ public abstract class ClassLoader {
     public Enumeration<URL> getResources(String name) throws IOException {
         @SuppressWarnings("unchecked")
         Enumeration<URL>[] tmp = (Enumeration<URL>[]) new Enumeration<?>[2];
+
+        // 如果父类加载器不为空，则由父类加载器获取资源，存入到统一资源定位符枚举数组的第一个位置
         if (parent != null) {
             tmp[0] = parent.getResources(name);
         } else {
+            // 如果父类加载器为空，则由引导类加载器获取资源，存入到统一资源定位符枚举数组的第一个位置
             tmp[0] = getBootstrapResources(name);
         }
+
+        // findResource方法，实际上只是返回一个空枚举类实例，因此存入到统一资源定位符数组第二个位置的是一个空枚举实例
         tmp[1] = findResources(name);
 
+        // 返回一个新建的符合枚举类实例
         return new CompoundEnumeration<>(tmp);
     }
 
@@ -1296,10 +1302,15 @@ public abstract class ClassLoader {
     public static Enumeration<URL> getSystemResources(String name)
         throws IOException
     {
+        // 获得系统类加载器
         ClassLoader system = getSystemClassLoader();
+
+        // 如果系统类加载器为空，则从引导类路径获取资源
         if (system == null) {
             return getBootstrapResources(name);
         }
+
+        // 从系统类路径获取资源
         return system.getResources(name);
     }
 
@@ -1314,10 +1325,13 @@ public abstract class ClassLoader {
 
     /**
      * Find resources from the VM's built-in classloader.
+     *
+     * 从虚拟机的内置类加载器中找到资源。
      */
     private static Enumeration<URL> getBootstrapResources(String name)
         throws IOException
     {
+        // 返回一个统一资源定位符枚举实例
         final Enumeration<Resource> e =
             getBootstrapClassPath().getResources(name);
         return new Enumeration<URL> () {
@@ -1331,7 +1345,9 @@ public abstract class ClassLoader {
     }
 
     // Returns the URLClassPath that is used for finding system resources.
+    // 返回被用于寻找系统资源的统一资源定位符类路径
     static URLClassPath getBootstrapClassPath() {
+        // 调用了启动器的获取引导类路径方法
         return sun.misc.Launcher.getBootstrapClassPath();
     }
 
@@ -1480,25 +1496,42 @@ public abstract class ClassLoader {
      */
     @CallerSensitive
     public static ClassLoader getSystemClassLoader() {
+        // 初始化系统类加载器
         initSystemClassLoader();
+
+        // 如果系统类加载器为空，则直接返回空
         if (scl == null) {
             return null;
         }
+
+        // 权限校验
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             checkClassLoaderPermission(scl, Reflection.getCallerClass());
         }
+
+        // 返回系统类加载器
         return scl;
     }
 
     private static synchronized void initSystemClassLoader() {
+        // 如果系统类加载器还未被设置，那么执行下面逻辑，否则本方法直接执行完毕
         if (!sclSet) {
+            // 如果系统类加载器不为空（但能进入此方法体说明系统类加载器还未被设置，因此互相矛盾），则抛出违规状态异常（“递归调用”）
             if (scl != null)
                 throw new IllegalStateException("recursive invocation");
+
+            // 在系统类加载器为空的情况下
+            // 获得启动器
             sun.misc.Launcher l = sun.misc.Launcher.getLauncher();
+
+            // 如果启动器不为空
             if (l != null) {
+                // 通过启动器获得类加载器
                 Throwable oops = null;
                 scl = l.getClassLoader();
+
+                // 权限部分，暂且跳过
                 try {
                     scl = AccessController.doPrivileged(
                         new SystemClassLoaderAction(scl));
@@ -1508,6 +1541,8 @@ public abstract class ClassLoader {
                         oops = oops.getCause();
                     }
                 }
+
+                // 如果存在可抛出对象，则在相关处理后抛出
                 if (oops != null) {
                     if (oops instanceof Error) {
                         throw (Error) oops;
@@ -1517,6 +1552,8 @@ public abstract class ClassLoader {
                     }
                 }
             }
+
+            // 将系统类加载器标记设置为真
             sclSet = true;
         }
     }
@@ -1579,10 +1616,12 @@ public abstract class ClassLoader {
 
     // The class loader for the system
     // @GuardedBy("ClassLoader.class")
+    // 用于系统的类加载器
     private static ClassLoader scl;
 
     // Set to true once the system class loader has been set
     // @GuardedBy("ClassLoader.class")
+    // 一旦系统类加载器被设置，此值将被设为真
     private static boolean sclSet;
 
 
