@@ -403,7 +403,7 @@ public abstract class ClassLoader {
     protected Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException
     {
-        // 加锁，这说明类加载器加载字节码的时候是线程安全的
+        // 加锁，这说明类加载器加载字节码的过程是线程安全的
         synchronized (getClassLoadingLock(name)) {
             // First, check if the class has already been loaded
             // 首先，检查是否类已经被加载
@@ -495,11 +495,13 @@ public abstract class ClassLoader {
     }
 
     // This method is invoked by the virtual machine to load a class.
+    // 此方法被虚拟机调用以加载类
     private Class<?> loadClassInternal(String name)
         throws ClassNotFoundException
     {
         // For backward compatibility, explicitly lock on 'this' when
         // the current class loader is not parallel capable.
+        // 出于向后兼容，当当前类加载器不具备并行能力时，显式地锁住当前实例
         if (parallelLockMap == null) {
             synchronized (this) {
                  return loadClass(name);
